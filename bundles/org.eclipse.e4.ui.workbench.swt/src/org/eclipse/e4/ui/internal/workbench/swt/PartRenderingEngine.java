@@ -216,6 +216,7 @@ public class PartRenderingEngine implements IPresentationEngine {
 					Control ctrl = (Control) changedElement.getWidget();
 					ctrl.setParent(realComp);
 					fixZOrder(changedElement);
+					ctrl.requestLayout();
 				}
 
 				if (parent instanceof MElementContainer<?>) {
@@ -262,7 +263,7 @@ public class PartRenderingEngine implements IPresentationEngine {
 				}
 			}
 		} else if (UIEvents.isREMOVE(event)) {
-			for (Object o : UIEvents.asIterable(event, UIEvents.EventTags.NEW_VALUE)) {
+			for (Object o : UIEvents.asIterable(event, UIEvents.EventTags.OLD_VALUE)) {
 				MUIElement removed = (MUIElement) o;
 				if (removed.getRenderer() != null) {
 					removeGui(removed);
@@ -1024,7 +1025,11 @@ public class PartRenderingEngine implements IPresentationEngine {
 	}
 
 	protected AbstractPartRenderer getRendererFor(MUIElement element) {
-		return (AbstractPartRenderer) element.getRenderer();
+		Object renderer = element.getRenderer();
+		if (renderer instanceof AbstractPartRenderer) {
+			return (AbstractPartRenderer) renderer;
+		}
+		return null; // renderer may be HeadlessContextPresentationEngine
 	}
 
 	@Override

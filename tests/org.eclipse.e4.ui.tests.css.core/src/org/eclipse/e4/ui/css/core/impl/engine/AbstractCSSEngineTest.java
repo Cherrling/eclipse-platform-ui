@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2016 Daniel Raap and others.
+ * Copyright (c) 2015, 2023 Daniel Raap and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 
 public class AbstractCSSEngineTest {
+
 	private AbstractCSSEngine objectUnderTest;
 
 	@BeforeEach
@@ -43,8 +44,8 @@ public class AbstractCSSEngineTest {
 		objectUnderTest.setElementProvider((element, engine) -> {
 			// throws NPE if parameter is null
 			Objects.requireNonNull(element);
-			if (element instanceof Element) {
-				return (Element) element;
+			if (element instanceof Element e) {
+				return e;
 			}
 			return null;
 		});
@@ -55,7 +56,7 @@ public class AbstractCSSEngineTest {
 	 *      506120 - [CSS] NPE if CSS styling is disabled</a>
 	 */
 	@Test
-	public void testGetElement_null() {
+	void testGetElement_null() {
 		Element result = objectUnderTest.getElement(null);
 		assertNull(result);
 	}

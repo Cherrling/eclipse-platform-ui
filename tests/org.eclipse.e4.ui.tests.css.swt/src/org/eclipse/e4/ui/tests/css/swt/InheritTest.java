@@ -14,7 +14,7 @@
  *******************************************************************************/
 package org.eclipse.e4.ui.tests.css.swt;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
@@ -23,9 +23,8 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class InheritTest extends CSSSWTTestCase {
 
@@ -36,7 +35,7 @@ public class InheritTest extends CSSSWTTestCase {
 	static final RGB BLUE = new RGB(0, 0, 255);
 	static final RGB RED = new RGB(255, 0, 0);
 
-	@Before
+	@BeforeEach
 	@Override
 	public void setUp() {
 		super.setUp();
@@ -45,20 +44,13 @@ public class InheritTest extends CSSSWTTestCase {
 		redColor = new Color(display, RED);
 	}
 
-	@After
-	@Override
-	public void tearDown() {
-		redColor.dispose();
-		super.tearDown();
-	}
-
 	/**
 	 * Test status quo: if a more general rule sets the background, it applies
 	 * to widgets matching more specific rules with specify no explicit
 	 * backgound-color.
 	 */
 	@Test
-	public void testBackgroundNoInherit() {
+	void testBackgroundNoInherit() {
 		Label labelToTest = createTestLabel(
 				"Label { background-color: #00FF00; }\n"
 						+ "Composite Label { color: #0000FF; }", true);
@@ -73,7 +65,7 @@ public class InheritTest extends CSSSWTTestCase {
 	 * background-color of the parent widget.
 	 */
 	@Test
-	public void testBackgroundInherit() throws Exception {
+	void testBackgroundInherit() throws Exception {
 		Label labelToTest = createTestLabel(
 				"Label { background-color: #00FF00; }\n"
 						+ "Composite { background-color: #FF0000; } \n"
@@ -90,7 +82,7 @@ public class InheritTest extends CSSSWTTestCase {
 	 * background-color of the parent widget.
 	 */
 	@Test
-	public void testBackgroundInheritsAlsoExplicitlySetColors()
+	void testBackgroundInheritsAlsoExplicitlySetColors()
 			throws Exception {
 		Label labelToTest = createTestLabel(
 				"Label { background-color: #00FF00; }\n"

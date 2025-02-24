@@ -686,10 +686,6 @@ public abstract class WorkbenchAdvisor {
 	 *
 	 * @param configurer the window configurer
 	 * @param shell      the window's shell
-	 * @see IWorkbenchWindowConfigurer#createMenuBar
-	 * @see IWorkbenchWindowConfigurer#createCoolBarControl
-	 * @see IWorkbenchWindowConfigurer#createStatusLineControl
-	 * @see IWorkbenchWindowConfigurer#createPageComposite
 	 *
 	 * @deprecated since 3.1, override
 	 *             {@link WorkbenchWindowAdvisor#createWindowContents(Shell)}
@@ -756,7 +752,7 @@ public abstract class WorkbenchAdvisor {
 					error[0] = e;
 				} finally {
 					initDone = true;
-					yield();
+					Thread.yield();
 					try {
 						Thread.sleep(5);
 					} catch (InterruptedException e) {

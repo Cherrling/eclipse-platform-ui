@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Red Hat Inc. and others.
+ * Copyright (c) 2017, 2022 Red Hat Inc. and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -18,7 +18,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
@@ -28,7 +27,6 @@ import org.eclipse.ui.internal.quickaccess.QuickAccessDialog;
 import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.DisplayHelper;
 import org.eclipse.ui.tests.harness.util.UITestCase;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -66,9 +64,8 @@ public class ContentMatchesTest {
 		Text text = quickAccessContents.getFilterText();
 		text.setText("whitespace");
 		final Table table = quickAccessContents.getTable();
-		assertTrue(DisplayHelper.waitForCondition(table.getDisplay(), TIMEOUT, () ->
-			Matchers.hasItems(Matchers.containsString("Text Editors")).matches(getAllEntries(table))
-		));
+		assertTrue(DisplayHelper.waitForCondition(table.getDisplay(), TIMEOUT, () -> getAllEntries(table).stream()
+				.filter(x -> x.contains("Text Editors")).toList().isEmpty()));
 	}
 
 	@Test
@@ -76,9 +73,8 @@ public class ContentMatchesTest {
 		Text text = quickAccessContents.getFilterText();
 		text.setText("text white");
 		final Table table = quickAccessContents.getTable();
-		assertTrue(DisplayHelper.waitForCondition(table.getDisplay(), TIMEOUT, () ->
-			Matchers.hasItems(Matchers.containsString("Text Editors")).matches(getAllEntries(table))
-		));
+		assertTrue(DisplayHelper.waitForCondition(table.getDisplay(), TIMEOUT, () -> getAllEntries(table).stream()
+				.filter(x -> x.contains("Text Editors")).toList().isEmpty()));
 	}
 
 	@Test
@@ -86,9 +82,10 @@ public class ContentMatchesTest {
 		Text text = quickAccessContents.getFilterText();
 		text.setText("rename ltk");
 		final Table table = quickAccessContents.getTable();
-		assertTrue(DisplayHelper.waitForCondition(table.getDisplay(), TIMEOUT, () -> //
-		Matchers.hasItems(Matchers.containsString("Rename the selected resource and notify LTK participants."))
-				.matches(getAllEntries(table))));
+		assertTrue(DisplayHelper.waitForCondition(table.getDisplay(), TIMEOUT,
+				() -> getAllEntries(table).stream()
+						.filter(x -> x.contains("Rename the selected resource and notify LTK participants."))
+						.toList().isEmpty()));
 	}
 
 	static List<String> getAllEntries(Table table) {
@@ -100,7 +97,7 @@ public class ContentMatchesTest {
 				res.append(" | ");
 			}
 			return res.toString();
-		}).collect(Collectors.toList());
+		}).toList();
 	}
 
 }

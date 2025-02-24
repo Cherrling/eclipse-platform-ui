@@ -19,14 +19,15 @@ package org.eclipse.core.tests.databinding.observable.value;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.databinding.observable.value.ComputedValue;
+import org.eclipse.core.databinding.observable.value.IObservableValue;
 import org.eclipse.core.databinding.observable.value.WritableValue;
 import org.eclipse.jface.tests.databinding.AbstractDefaultRealmTestCase;
 import org.junit.Test;
@@ -84,6 +85,15 @@ public class ComputedValueTest extends AbstractDefaultRealmTestCase {
 		value.setValue(Integer.valueOf(44));
 
 		assertEquals("calculated value should have been that of the writable value", value.getValue(), cv.getValue());
+	}
+
+	@Test
+	public void testCreate() throws Exception {
+		WritableValue<Integer> value = new WritableValue<>(42, null);
+		IObservableValue<Integer> cv = ComputedValue.create(value::getValue);
+		assertEquals(value.getValue(), cv.getValue());
+		value.setValue(44);
+		assertEquals(value.getValue(), cv.getValue());
 	}
 
 	private static class WritableValueExt<E> extends WritableValue<E> {
@@ -147,10 +157,6 @@ public class ComputedValueTest extends AbstractDefaultRealmTestCase {
 			}
 		};
 
-		try {
-			cv.setValue(new Object());
-			fail("exception should have been thrown");
-		} catch (UnsupportedOperationException e) {
-		}
+		assertThrows(UnsupportedOperationException.class, () -> cv.setValue(new Object()));
 	}
 }

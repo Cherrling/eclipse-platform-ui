@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2020 IBM Corporation and others.
+ * Copyright (c) 2003, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,7 @@
  *     		- Fix for Bug 151204 [Progress] Blocked status of jobs are not applied/reported
  *     Lars Vogel <Lars.Vogel@gmail.com> - Bug 422040
  *     Philipp Bumann <bumannp@gmail.com> - Bug 477602
+ *     Christoph Läubrich - Issue #8
  *******************************************************************************/
 package org.eclipse.e4.ui.progress.internal;
 
@@ -32,12 +33,11 @@ import java.util.Map.Entry;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+import org.eclipse.core.runtime.ICoreRunnable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.ListenerList;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
@@ -77,7 +77,7 @@ public class ProgressManager extends ProgressProvider {
 	private static ProgressManager singleton;
 
 	final private Map<Job, JobInfo> jobs = Collections
-			.synchronizedMap(new HashMap<Job, JobInfo>());
+			.synchronizedMap(new HashMap<>());
 
 	final Map<Job, JobMonitor> runnableMonitors = new HashMap<>();
 
@@ -436,18 +436,10 @@ public class ProgressManager extends ProgressProvider {
 					boolean noDialog = shouldRunInBackground();
 					if (!noDialog) {
 						final IJobChangeEvent finalEvent = event;
-						Job showJob = new UIJob(
-								ProgressMessages.ProgressManager_showInDialogName) {
-							@Override
-							public IStatus runInUIThread(
-									IProgressMonitor monitor) {
-								progressService.showInDialog(null, finalEvent.getJob());
-								return Status.OK_STATUS;
-							}
-						};
+						Job showJob = UIJob.create(ProgressMessages.ProgressManager_showInDialogName,
+								(ICoreRunnable) m -> progressService.showInDialog(null, finalEvent.getJob()));
 						showJob.setSystem(true);
 						showJob.schedule();
-						return;
 					}
 				}
 			}
@@ -511,16 +503,21 @@ public class ProgressManager extends ProgressProvider {
 
 	@Override
 	public IProgressMonitor getDefaultMonitor() {
+		return monitorFor(null);
+	}
+
+	@Override
+	public IProgressMonitor monitorFor(IProgressMonitor monitor) {
 		// only need a default monitor for operations the UI thread
 		// and only if there is a display
 		Display display;
 		if (PlatformUI.isWorkbenchRunning() && !PlatformUI.isWorkbenchStarting()) {
 			display = getDisplay();
 			if (!display.isDisposed() && (display.getThread() == Thread.currentThread())) {
-				return new EventLoopProgressMonitor(new NullProgressMonitor());
+				return new EventLoopProgressMonitor(IProgressMonitor.nullSafe(monitor));
 			}
 		}
-		return super.getDefaultMonitor();
+		return IProgressMonitor.nullSafe(monitor);
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corporation and others.
+ * Copyright (c) 2009, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,7 @@
  *     Lars Vogel (Lars.Vogel@vogella.com) - Bug 416082,  472654, 395825
  *     Simon Scholz <simon.scholz@vogella.com> - Bug 450411, 486876, 461063
  *     Dirk Fauth <dirk.fauth@googlemail.com> - Bug 463962
+ *     Christoph Läubrich - Bug 573537
  ******************************************************************************/
 package org.eclipse.e4.ui.internal.workbench;
 
@@ -586,10 +587,10 @@ public class PartServiceImpl implements EPartService {
 
 			// if that is a shared part, check the placeholders
 			if (workbenchWindow.getSharedElements().contains(part)) {
-				List<MPlaceholder> placeholders = modelService.findElements(perspective, elementId,
-						MPlaceholder.class, null);
+				List<MPlaceholder> placeholders = modelService.findElements(perspective, null, MPlaceholder.class,
+						null);
 				for (MPlaceholder mPlaceholder : placeholders) {
-					if (mPlaceholder.isVisible() && mPlaceholder.isToBeRendered()) {
+					if (mPlaceholder.getRef() == part && mPlaceholder.isVisible() && mPlaceholder.isToBeRendered()) {
 						return true;
 					}
 				}
@@ -610,6 +611,7 @@ public class PartServiceImpl implements EPartService {
 			List<MPart> newPerspectiveParts = modelService.findElements(perspective, null,
 					MPart.class, null);
 			// if possible, keep the same active part across perspective switches
+			IEclipseContext eclipseContext = perspective.getContext();
 			if (newPerspectiveParts.contains(activePart)
 					&& partActivationHistory.isValid(perspective, activePart)) {
 				MPart target = activePart;
@@ -618,24 +620,26 @@ public class PartServiceImpl implements EPartService {
 					activeChild.deactivate();
 				}
 				if (target.getContext() != null && target.getContext().get(MPerspective.class) != null
-						&& target.getContext().get(MPerspective.class).getContext() == perspective.getContext()) {
+						&& target.getContext().get(MPerspective.class).getContext() == eclipseContext) {
 					target.getContext().activateBranch();
-				} else {
-					perspective.getContext().activate();
+				} else if (eclipseContext != null) {
+					eclipseContext.activate();
 				}
 
 				modelService.bringToTop(target);
 				activate(target, true, false);
+				UIEvents.publishEvent(UIEvents.UILifeCycle.PERSPECTIVE_SWITCHED, perspective);
 				return;
 			}
 
-			MPart newActivePart = perspective.getContext().getActiveLeaf().get(MPart.class);
+			MPart newActivePart = eclipseContext != null ? eclipseContext.getActiveLeaf().get(MPart.class) : null;
 			if (newActivePart == null) {
 				// whatever part was previously active can no longer be found, find another one
 				MPart candidate = partActivationHistory.getActivationCandidate(perspective);
 				if (candidate != null) {
 					modelService.bringToTop(candidate);
 					activate(candidate, true, false);
+					UIEvents.publishEvent(UIEvents.UILifeCycle.PERSPECTIVE_SWITCHED, perspective);
 					return;
 				}
 			}
@@ -643,7 +647,9 @@ public class PartServiceImpl implements EPartService {
 			// there seems to be no parts in this perspective, just activate it as is then
 			if (newActivePart == null) {
 				modelService.bringToTop(perspective);
-				perspective.getContext().activate();
+				if (eclipseContext != null) {
+					eclipseContext.activate();
+				}
 			} else {
 				if ((modelService.getElementLocation(newActivePart) & EModelService.IN_SHARED_AREA) != 0) {
 					if (newActivePart.getParent() != null
@@ -652,6 +658,7 @@ public class PartServiceImpl implements EPartService {
 					}
 				}
 				activate(newActivePart, true, false);
+				UIEvents.publishEvent(UIEvents.UILifeCycle.PERSPECTIVE_SWITCHED, perspective);
 			}
 		}
 	}
@@ -760,8 +767,11 @@ public class PartServiceImpl implements EPartService {
 			partActivationHistory.activate(part, activateBranch);
 
 			if (requiresFocus) {
-				IPresentationEngine pe = part.getContext().get(IPresentationEngine.class);
-				pe.focusGui(part);
+				IEclipseContext context = part.getContext();
+				if (context != null) {
+					IPresentationEngine pe = context.get(IPresentationEngine.class);
+					pe.focusGui(part);
+				}
 			}
 
 			// store the activation time to sort the parts in MRU order

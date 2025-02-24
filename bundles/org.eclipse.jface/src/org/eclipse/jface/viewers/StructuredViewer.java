@@ -33,6 +33,7 @@ import org.eclipse.jface.internal.InternalPolicy;
 import org.eclipse.jface.util.OpenStrategy;
 import org.eclipse.jface.util.Policy;
 import org.eclipse.jface.util.SafeRunnable;
+import org.eclipse.jface.viewers.internal.ExpandableNode;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DragSource;
 import org.eclipse.swt.dnd.DragSourceListener;
@@ -814,6 +815,11 @@ public abstract class StructuredViewer extends ContentViewer implements IPostSel
 	 * @see #addPostSelectionChangedListener(ISelectionChangedListener)
 	 */
 	protected void firePostSelectionChanged(final SelectionChangedEvent event) {
+		// do not inform client listeners on ExpandableNode selection
+		if (event.getSelection() instanceof StructuredSelection sel
+				&& sel.getFirstElement() instanceof ExpandableNode) {
+			return;
+		}
 		for (ISelectionChangedListener l : postSelectionChangedListeners) {
 			SafeRunnable.run(new SafeRunnable() {
 				@Override
@@ -852,8 +858,7 @@ public abstract class StructuredViewer extends ContentViewer implements IPostSel
 			return result;
 		}
 		if (filters != null) {
-			for (Object element : filters) {
-				ViewerFilter f = (ViewerFilter) element;
+			for (ViewerFilter f : filters) {
 				Object[] filteredResult = f.filter(this, parent, result);
 				if (associateListener != null && filteredResult.length != result.length) {
 					notifyFilteredOut(result, filteredResult);
@@ -1415,7 +1420,17 @@ public abstract class StructuredViewer extends ContentViewer implements IPostSel
 
 	@Override
 	public void refresh() {
-		refresh(getRoot());
+		Control control = getControl();
+		if (control != null) {
+			control.setRedraw(false);
+		}
+		try {
+			refresh(getRoot());
+		} finally {
+			if (control != null) {
+				control.setRedraw(true);
+			}
+		}
 	}
 
 	/**
@@ -1708,10 +1723,8 @@ public abstract class StructuredViewer extends ContentViewer implements IPostSel
 	/**
 	 * Sets this viewer's sorter and triggers refiltering and resorting of this
 	 * viewer's element. Passing <code>null</code> turns sorting off.
-	 * <p>
 	 *
 	 * @deprecated use <code>setComparator()</code> instead.
-	 *             </p>
 	 *
 	 * @param sorter
 	 *            a viewer sorter, or <code>null</code> if none

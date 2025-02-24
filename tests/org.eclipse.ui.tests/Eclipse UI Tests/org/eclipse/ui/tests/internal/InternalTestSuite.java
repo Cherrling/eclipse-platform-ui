@@ -14,6 +14,7 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.internal;
 
+import org.eclipse.ui.tests.largefile.LargeFileLimitsPreferenceHandlerTest;
 import org.eclipse.ui.tests.markers.Bug75909Test;
 import org.eclipse.ui.tests.markers.DeclarativeFilterActivityTest;
 import org.eclipse.ui.tests.markers.DeclarativeFilterDeclarationTest;
@@ -22,6 +23,7 @@ import org.eclipse.ui.tests.markers.MarkerHelpRegistryTest;
 import org.eclipse.ui.tests.markers.MarkerQueryTest;
 import org.eclipse.ui.tests.markers.MarkerSortUtilTest;
 import org.eclipse.ui.tests.markers.MarkerSupportRegistryTests;
+import org.eclipse.ui.tests.markers.MarkerSupportViewTest;
 import org.eclipse.ui.tests.markers.MarkerTesterTest;
 import org.eclipse.ui.tests.markers.MarkerViewTests;
 import org.eclipse.ui.tests.markers.MarkerViewUtilTest;
@@ -41,6 +43,7 @@ import org.junit.runners.Suite;
 	DeclarativeFilterDeclarationTest.class,
 	ResourceMappingMarkersTest.class,
 	MarkerSupportRegistryTests.class,
+	MarkerSupportViewTest.class,
 	MarkerSortUtilTest.class,
 	MarkerViewTests.class,
 	MarkerViewUtilTest.class,
@@ -61,5 +64,7 @@ import org.junit.runners.Suite;
 	SaveablesListTest.class,
 	Bug540297WorkbenchPageFindViewTest.class,
 	Bug549139Test.class,
+	LargeFileLimitsPreferenceHandlerTest.class,
+	WorkbookEditorsHandlerTest.class,
 })
 public class InternalTestSuite {}

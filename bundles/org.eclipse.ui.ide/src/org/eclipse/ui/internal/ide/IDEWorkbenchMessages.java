@@ -26,6 +26,7 @@
  * Lucas Bullen (Red Hat Inc.) - Bug 522096
  * Gunnar Wagenknecht - [102527] Project Natures property page
  * Mickael Istria (Red Hat Inc) - [102527] Project Natures property page
+ * Ingo Mohr <tellastory73@gmail.com> - Issue #198
  *******************************************************************************/
 package org.eclipse.ui.internal.ide;
 
@@ -573,6 +574,8 @@ public class IDEWorkbenchMessages extends NLS {
 	public static String IDEWorkbenchPreference_workbenchSystemExplorer;
 	public static String IDEWorkspacePreference_UnknownNatureSeverity;
 	public static String IDEWorkspacePreference_UnknownNatureSeverity_Ignore;
+	public static String IDEWorkspacePreference_UnknownEncodingSeverity;
+	public static String IDEWorkspacePreference_UnknownEncodingSeverity_Ignore;
 
 	// --- Linked Resources ---
 	public static String LinkedResourcesPreference_explanation;
@@ -1010,6 +1013,7 @@ public class IDEWorkbenchMessages extends NLS {
 	public static String ChooseWorkspaceDialog_defaultProductName;
 	public static String ChooseWorkspaceDialog_workspaceEntryLabel;
 	public static String ChooseWorkspaceDialog_browseLabel;
+	public static String ChooseWorkspaceDialog_browseTooltip;
 	public static String ChooseWorkspaceDialog_launchLabel;
 	public static String ChooseWorkspaceDialog_directoryBrowserTitle;
 	public static String ChooseWorkspaceDialog_directoryBrowserMessage;
@@ -1109,6 +1113,27 @@ public class IDEWorkbenchMessages extends NLS {
 
 	public static String ExtendedFileEditorsPreferencePage_strategyForUnassociatedFiles;
 	public static String ExtendedFileEditorsPreferencePage_labelNotResolved;
+
+	public static String LargeFileAssociationsPreferencePage_DisabledPageText;
+	public static String LargeFileAssociationsPreferencePage_EditEditorButton_Label;
+	public static String LargeFileAssociationsPreferencePage_DefaultLimitGroup_Label;
+	public static String LargeFileAssociationsPreferencePage_DefaultPreference_Label;
+	public static String LargeFileAssociationsPreferencePage_ColumnHeader_Editor;
+	public static String LargeFileAssociationsPreferencePage_ColumnHeader_Size;
+	public static String LargeFileAssociationsPreferencePage_EditorDialog_ShellTitle;
+	public static String LargeFileAssociationsPreferencePage_EditorDialog_Title;
+	public static String LargeFileAssociationsPreferencePage_EditorDialog_Message;
+	public static String LargeFileAssociationsPreferencePage_EditorDialog_Label_Editor;
+	public static String LargeFileAssociationsPreferencePage_EditorDialog_Label_FileSize;
+	public static String LargeFileAssociationsPreferencePage_EditorDialog_Radio_Prompt;
+	public static String LargeFileAssociationsPreferencePage_EditorDialog_Radio_Specific;
+	public static String LargeFileAssociationsPreferencePage_EditorDialog_Error_DuplicateSize;
+	public static String LargeFileAssociationsPreferencePage_EditorDialog_Error_NoEditorSelected;
+	public static String LargeFileAssociationsPreferencePage_ExtensionDialog_Label;
+	public static String LargeFileAssociationsPreferencePage_ExtensionDialog_Message;
+	public static String LargeFileAssociationsPreferencePage_ExtensionDialog_Error_WildcardAndDot;
+	public static String LargeFileAssociationsPreferencePage_EditorTable_DialogPrompt;
+	public static String LargeFileAssociationsPreferencePage_ExtensionsTable_DisabledClarification;
 
 	public static String WorkbenchPreference_maxSimultaneousBuilds;
 	public static String WorkbenchPreference_maxSimultaneousBuildIntervalError;

@@ -19,8 +19,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -63,7 +61,6 @@ import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IIDEHelpContextIds;
 import org.eclipse.ui.part.EditorPart;
-import org.xml.sax.SAXException;
 
 /**
  * A "fake" editor to show a welcome page
@@ -133,11 +130,10 @@ public class WelcomeEditor extends EditorPart {
 	 * Finds the next text
 	 */
 	private StyledText nextText(StyledText text) {
-		int index = 0;
 		if (text == null) {
 			return texts.get(0);
 		}
-		index = texts.indexOf(text);
+		int index = texts.indexOf(text);
 
 		//If we are not at the end....
 		if (index < texts.size() - 1) {
@@ -150,11 +146,10 @@ public class WelcomeEditor extends EditorPart {
 	 * Finds the previous text
 	 */
 	private StyledText previousText(StyledText text) {
-		int index = 0;
 		if (text == null) {
 			return texts.get(0);
 		}
-		index = texts.indexOf(text);
+		int index = texts.indexOf(text);
 
 		//If we are at the beginning....
 		if (index == 0) {
@@ -287,8 +282,7 @@ public class WelcomeEditor extends EditorPart {
 			}
 			StyledText text2 = (StyledText) e.widget;
 			WelcomeItem item = (WelcomeItem) e.widget.getData();
-			int offset = -1;
-			offset = text2.getOffsetAtPoint(new Point(e.x, e.y));
+			int offset = text2.getOffsetAtPoint(new Point(e.x, e.y));
 			if (offset == -1) {
 				text2.setCursor(null);
 			} else if (item.isLinkAt(offset)) {
@@ -853,7 +847,7 @@ public class WelcomeEditor extends EditorPart {
 	 *
 	 * @see IEditorPart
 	 */
-	public void gotoMarker(IMarker marker) {
+	public void gotoMarker(@SuppressWarnings({ "unused", "javadoc" }) IMarker marker) {
 		// do nothing
 	}
 
@@ -920,7 +914,7 @@ public class WelcomeEditor extends EditorPart {
 	public void read(InputStream is) throws IOException {
 		try {
 			parser = new WelcomeParser();
-		} catch (ParserConfigurationException | SAXException e) {
+		} catch (Exception e) {
 			throw (IOException) (new IOException().initCause(e));
 		}
 		parser.parse(is);

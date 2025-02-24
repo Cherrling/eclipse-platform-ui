@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corporation and others.
+ * Copyright (c) 2009, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -545,7 +545,7 @@ public class MMenuItemTest {
 
 		IContributionItem mmcItem = fileManager.getItems()[3];
 		assertEquals("mmc.item1", mmcItem.getId());
-		assertEquals("before the first show, we have no context to evaluate", true, mmcItem.isVisible());
+		assertTrue("before the first show, we have no context to evaluate", mmcItem.isVisible());
 
 		MenuManager manager = renderer.getManager(mainMenu);
 		manager.updateAll(true);
@@ -562,18 +562,17 @@ public class MMenuItemTest {
 
 		fileWidget.notifyListeners(SWT.Show, show);
 
-		assertEquals("after the first show, it should not be visible", false, mmcItem.isVisible());
+		assertFalse("after the first show, it should not be visible", mmcItem.isVisible());
 
 		fileWidget.notifyListeners(SWT.Hide, hide);
 
 		appContext.set("mmc1", Boolean.TRUE);
 
-		assertEquals("Change should not show up until next show", false,
-				mmcItem.isVisible());
+		assertFalse("Change should not show up until next show", mmcItem.isVisible());
 
 		fileWidget.notifyListeners(SWT.Show, show);
 
-		assertEquals(true, mmcItem.isVisible());
+		assertTrue(mmcItem.isVisible());
 
 		fileWidget.notifyListeners(SWT.Hide, hide);
 
@@ -581,7 +580,7 @@ public class MMenuItemTest {
 
 		fileWidget.notifyListeners(SWT.Show, show);
 
-		assertEquals(false, mmcItem.isVisible());
+		assertFalse(mmcItem.isVisible());
 
 		fileWidget.notifyListeners(SWT.Hide, hide);
 	}
@@ -731,7 +730,7 @@ public class MMenuItemTest {
 
 		MMenu menu = ems.createModelElement(MMenu.class);
 		MDirectMenuItem menuItem = ems.createModelElement(MDirectMenuItem.class);
-		final boolean executed[] = { false };
+		final boolean[] executed = { false };
 		menuItem.setObject(new Object() {
 			@Execute
 			public void execute(MUIElement uiElement, MMenuItem menuItem,
@@ -797,7 +796,7 @@ public class MMenuItemTest {
 
 		MHandler handler = ems.createModelElement(MHandler.class);
 		handler.setCommand(command);
-		final boolean executed[] = { false };
+		final boolean[] executed = { false };
 		handler.setObject(new Object() {
 			@Execute
 			public void execute(MUIElement uiElement, MMenuItem menuItem,

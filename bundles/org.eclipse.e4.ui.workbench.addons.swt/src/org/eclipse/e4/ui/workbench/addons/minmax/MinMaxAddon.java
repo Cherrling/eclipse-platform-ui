@@ -39,6 +39,7 @@ import org.eclipse.e4.ui.model.application.ui.advanced.MPerspectiveStack;
 import org.eclipse.e4.ui.model.application.ui.advanced.MPlaceholder;
 import org.eclipse.e4.ui.model.application.ui.basic.MPartStack;
 import org.eclipse.e4.ui.model.application.ui.basic.MTrimBar;
+import org.eclipse.e4.ui.model.application.ui.basic.MTrimElement;
 import org.eclipse.e4.ui.model.application.ui.basic.MTrimmedWindow;
 import org.eclipse.e4.ui.model.application.ui.basic.MWindow;
 import org.eclipse.e4.ui.model.application.ui.menu.MToolControl;
@@ -166,7 +167,8 @@ public class MinMaxAddon {
 			}
 
 			MUIElement parentElement = element.getParent();
-			while (parentElement != null && !(parentElement instanceof MArea)) {
+			while (parentElement != null
+					&& (!(parentElement instanceof MArea) || parentElement.getCurSharedRef() == null)) {
 				parentElement = parentElement.getParent();
 			}
 
@@ -290,7 +292,7 @@ public class MinMaxAddon {
 
 				// gather up any minimized stacks for this perspective...
 				List<MToolControl> toRemove = new ArrayList<>();
-				for (MUIElement child : bar.getChildren()) {
+				for (MTrimElement child : bar.getChildren()) {
 					String trimElementId = child.getElementId();
 					if (child instanceof MToolControl && trimElementId.contains(perspectiveId)) {
 						toRemove.add((MToolControl) child);
@@ -328,10 +330,11 @@ public class MinMaxAddon {
 
 		MPerspectiveStack ps = (MPerspectiveStack) changedElement;
 		MWindow window = modelService.getTopLevelWindowFor(ps);
-		final Shell winShell = (Shell) window.getWidget();
-		if (winShell == null) {
+		Object widget = window.getWidget();
+		if (!(widget instanceof Shell)) {
 			return;
 		}
+		final Shell winShell = (Shell) widget;
 		List<MToolControl> tcList = modelService.findElements(window, null, MToolControl.class);
 
 		final MPerspective curPersp = ps.getSelectedElement();

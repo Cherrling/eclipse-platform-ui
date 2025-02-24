@@ -1,3 +1,43 @@
+eclipse-platform-ui (4.29-1) unstable; urgency=medium
+
+  * New upstream release
+    - Build more bundles with Java 17
+    - Build the bundles migrated from src:eclipse-platform-text
+    - Depend on libeclipse-core-runtime-java (>= 3.29)
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Sun, 21 Jul 2024 16:48:37 +0200
+
+eclipse-platform-ui (4.28-1) unstable; urgency=medium
+
+  * New upstream release
+    - Depend on libswt-gtk-4-java (>= 4.28)
+    - Depend on Java 17
+    - Updated the bundle dependencies
+  * Standards-Version updated to 4.7.0
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Tue, 16 Jul 2024 09:46:39 +0200
+
+eclipse-platform-ui (4.26-1) unstable; urgency=medium
+
+  * New upstream release
+    - Build more bundles with Java 11
+    - Depend on libeclipse-core-jobs-java (>= 3.13)
+    - Depend on libeclipse-core-resources-java (>= 3.18)
+    - Updated the bundle dependencies
+  * Standards-Version updated to 4.6.2
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Wed, 04 Jan 2023 01:08:26 +0100
+
+eclipse-platform-ui (4.23-1) unstable; urgency=medium
+
+  * New upstream release
+    - Build more bundles with Java 11
+    - Ignore the missing NoReference annotation
+  * Standards-Version updated to 4.6.1
+  * Track and download the new releases from GitHub
+
+ -- Emmanuel Bourg <ebourg@apache.org>  Fri, 09 Dec 2022 08:38:48 +0100
+
 eclipse-platform-ui (4.21-1) unstable; urgency=medium
 
   * New upstream release

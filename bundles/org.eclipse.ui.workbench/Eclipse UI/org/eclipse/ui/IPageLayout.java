@@ -85,15 +85,6 @@ public interface IPageLayout {
 	String ID_EDITOR_AREA = "org.eclipse.ui.editorss"; //$NON-NLS-1$
 
 	/**
-	 * The view id for the workbench's Resource Navigator standard component.
-	 *
-	 * @deprecated this has been replaced by the Common Navigator Framework as of
-	 *             release 3.5.
-	 */
-	@Deprecated
-	String ID_RES_NAV = "org.eclipse.ui.views.ResourceNavigator"; //$NON-NLS-1$
-
-	/**
 	 * The view id for the Project Explorer.
 	 *
 	 * @since 3.5
@@ -577,4 +568,30 @@ public interface IPageLayout {
 	 * @since 3.3
 	 */
 	IPlaceholderFolderLayout getFolderForView(String id);
+
+	/**
+	 * Sets the onboarding text. The text is shown in the editor area in case no
+	 * editor is open.
+	 *
+	 * @param text the onboarding text
+	 * @since 3.129
+	 */
+	void setEditorOnboardingText(String text);
+
+	/**
+	 * Sets the onboarding image uri. The corresponding image is shown in the editor
+	 * area in case no editor is open.
+	 *
+	 * @param imageUri the uri of the onboarding image
+	 * @since 3.129
+	 */
+	void setEditorOnboardingImageUri(String imageUri);
+
+	/**
+	 * Adds a command id for the empty editor area.
+	 *
+	 * @param commandId an id of an onboarding command
+	 * @since 3.129
+	 */
+	void addEditorOnboardingCommandId(String commandId);
 }

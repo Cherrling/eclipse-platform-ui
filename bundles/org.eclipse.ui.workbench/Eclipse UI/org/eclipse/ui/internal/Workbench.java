@@ -147,8 +147,10 @@ import org.eclipse.swt.graphics.DeviceData;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IDecoratorManager;
 import org.eclipse.ui.IEditorInput;
@@ -220,7 +222,6 @@ import org.eclipse.ui.internal.model.ContributionService;
 import org.eclipse.ui.internal.progress.ProgressManager;
 import org.eclipse.ui.internal.progress.ProgressManagerUtil;
 import org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants;
-import org.eclipse.ui.internal.registry.UIExtensionTracker;
 import org.eclipse.ui.internal.registry.ViewDescriptor;
 import org.eclipse.ui.internal.services.EvaluationService;
 import org.eclipse.ui.internal.services.IServiceLocatorCreator;
@@ -1463,9 +1464,13 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 					Point size = result.getWindowConfigurer().getInitialSize();
 					window.setWidth(size.x);
 					window.setHeight(size.y);
+
+					placeNearActiveShell(window);
+
 					application.getChildren().add(window);
 					application.setSelectedElement(window);
 				}
+
 				ContextInjectionFactory.inject(result, windowContext);
 				windowContext.set(IWorkbenchWindow.class, result);
 			} finally {
@@ -1482,6 +1487,81 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 			result.fireWindowOpened();
 		}
 		return result;
+	}
+
+	private void placeNearActiveShell(MWindow window) {
+		if (getDisplay() == null) {
+			return;
+		}
+
+		Shell activeShell = getDisplay().getActiveShell();
+		if (activeShell == null) {
+			return;
+		}
+
+		Monitor currentMonitor = findMonitorThatContainsMostOf(activeShell.getBounds());
+
+		final int padding = 20;
+		Rectangle paddedMonitorBounds = shrink(currentMonitor.getBounds(), padding);
+
+		final int offsetToExistingShell = 100;
+		Rectangle newShellBounds = new Rectangle(activeShell.getBounds().x + offsetToExistingShell,
+				activeShell.getBounds().y + offsetToExistingShell, window.getWidth(), window.getHeight());
+
+		moveIntoBounds(newShellBounds, paddedMonitorBounds);
+
+		window.setX(newShellBounds.x);
+		window.setY(newShellBounds.y);
+	}
+
+	private static Rectangle shrink(Rectangle rectangle, int padding) {
+		return new Rectangle(rectangle.x + padding, rectangle.y + padding, rectangle.width - 2 * padding,
+				rectangle.height - 2 * padding);
+	}
+
+	/**
+	 * @param rectangle a rectangle (e.g. the bounds of the shell)
+	 * @return The monitor that contains the biggest portion of the rectangle or the
+	 *         primary monitor if the rectangle is outside all monitors.
+	 */
+	private Monitor findMonitorThatContainsMostOf(Rectangle rectangle) {
+		Monitor bestFittingMonitor = getDisplay().getPrimaryMonitor();
+		int maxIntersectionArea = 0;
+
+		for (Monitor monitor : getDisplay().getMonitors()) {
+			Rectangle intersection = new Rectangle(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+			intersection.intersect(monitor.getBounds());
+
+			int insersectionArea = intersection.width * intersection.height;
+			if (insersectionArea > maxIntersectionArea) {
+				bestFittingMonitor = monitor;
+				maxIntersectionArea = insersectionArea;
+			}
+		}
+
+		return bestFittingMonitor;
+	}
+
+	private static void moveIntoBounds(Rectangle rectangleToMove, Rectangle bounds) {
+		// move into bounds if it's too far to the right
+		if (rectangleToMove.x + rectangleToMove.width > bounds.x + bounds.width) {
+			rectangleToMove.x = bounds.x + bounds.width - rectangleToMove.width;
+		}
+
+		// move into bounds if it's too far to the left
+		if (rectangleToMove.x < bounds.x) {
+			rectangleToMove.x = bounds.x;
+		}
+
+		// move into bounds if it's too far down
+		if (rectangleToMove.y + rectangleToMove.height > bounds.y + bounds.height) {
+			rectangleToMove.y = bounds.y + bounds.height - rectangleToMove.height;
+		}
+
+		// move into bounds if it's too far up
+		if (rectangleToMove.y < bounds.y) {
+			rectangleToMove.y = bounds.y;
+		}
 	}
 
 	/*
@@ -2051,16 +2131,6 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 	}
 
 	private void initializeLazyServices() {
-		e4Context.set(IExtensionTracker.class.getName(), new ContextFunction() {
-
-			@Override
-			public Object compute(IEclipseContext context, String contextKey) {
-				if (tracker == null) {
-					tracker = new UIExtensionTracker(getDisplay());
-				}
-				return tracker;
-			}
-		});
 		e4Context.set(IWorkbenchActivitySupport.class.getName(), new ContextFunction() {
 
 			@Override
@@ -2977,12 +3047,9 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 		if (WorkbenchPlugin.getDefault() != null) {
 			WorkbenchPlugin.getDefault().reset();
 		}
-		WorkbenchThemeManager.getInstance().dispose();
-		PropertyPageContributorManager.getManager().dispose();
-		ObjectActionContributorManager.getManager().dispose();
-		if (tracker != null) {
-			tracker.close();
-		}
+		WorkbenchThemeManager.disposeManager();
+		PropertyPageContributorManager.disposeManager();
+		ObjectActionContributorManager.disposeManager();
 		statusManager.unregister();
 	}
 
@@ -3204,8 +3271,6 @@ public final class Workbench extends EventManager implements IWorkbench, org.ecl
 	 * <code>null</code> if none.
 	 */
 	private IntroDescriptor introDescriptor;
-
-	private IExtensionTracker tracker;
 
 	private IRegistryChangeListener startupRegistryListener = event -> {
 		final IExtensionDelta[] deltas = event.getExtensionDeltas(PlatformUI.PLUGIN_ID,

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2015 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -19,12 +19,12 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
-import java.util.function.Supplier;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.PopupDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
@@ -66,7 +66,7 @@ public class JFaceResources {
 	 * Map of Display onto DeviceResourceManager. Holds all the resources for
 	 * the associated display.
 	 */
-	private static final Map<Display,DeviceResourceManager> registries = new HashMap<>();
+	private static final Map<Display, ResourceManager> registries = new HashMap<>();
 
 	/**
 	 * The symbolic font name for the banner font (value
@@ -183,7 +183,6 @@ public class JFaceResources {
 
 	/**
 	 * Returns the color registry for JFace itself.
-	 * <p>
 	 *
 	 * @return the <code>ColorRegistry</code>.
 	 * @since 3.0
@@ -196,27 +195,36 @@ public class JFaceResources {
 	}
 
 	/**
+	 * 300 is big enough to cache common images of eclipse IDE, and small enough to
+	 * not blow OS.
+	 */
+	private static final int CACHE_SIZE = Integer.getInteger("org.eclipse.jface.resource.cacheSize", 300).intValue(); //$NON-NLS-1$
+
+	/**
 	 * Returns the global resource manager for the given display
 	 *
 	 * @since 3.1
 	 *
-	 * @param toQuery
-	 *            display to query
+	 * @param toQuery display to query
 	 * @return the global resource manager for the given display
 	 */
 	public static ResourceManager getResources(final Display toQuery) {
+		Objects.requireNonNull(toQuery, "toQuery"); //$NON-NLS-1$
 		ResourceManager reg = registries.get(toQuery);
 
 		if (reg == null) {
-			final DeviceResourceManager mgr = new DeviceResourceManager(toQuery);
-			reg = mgr;
-			registries.put(toQuery, mgr);
+			if (CACHE_SIZE == 0) {
+				reg = new DeviceResourceManager(toQuery);
+			} else {
+				reg = new LazyResourceManager(CACHE_SIZE, new DeviceResourceManager(toQuery));
+			}
+			registries.put(toQuery, reg);
+			final ResourceManager mgr = reg;
 			toQuery.disposeExec(() -> {
 				mgr.dispose();
 				registries.remove(toQuery);
 			});
 		}
-
 		return reg;
 	}
 
@@ -229,7 +237,9 @@ public class JFaceResources {
 	 * @return the global ResourceManager for the current display
 	 */
 	public static ResourceManager getResources() {
-		return getResources(Display.getCurrent());
+		Display display = Display.getCurrent();
+		Objects.requireNonNull(display, "This is not an UI thread (or Device already disposed)"); //$NON-NLS-1$
+		return getResources(display);
 	}
 
 	/**
@@ -469,17 +479,15 @@ public class JFaceResources {
 	private static final void declareImage(Object bundle, String key, String path, Class<?> fallback,
 			String fallbackPath) {
 
-		Supplier<URL> supplier = () -> {
+		imageRegistry.put(key, ImageDescriptor.createFromURLSupplier(false, () -> {
 			if (bundle != null) {
-				URL url = FileLocator.find((Bundle) bundle, new Path(path), null);
-				if (url != null)
+				URL url = FileLocator.find((Bundle) bundle, IPath.fromOSString(path), null);
+				if (url != null) {
 					return url;
+				}
 			}
-			URL url = fallback.getResource(fallbackPath);
-			return url;
-		};
-
-		imageRegistry.put(key, ImageDescriptor.createFromURLSupplier(false, supplier));
+			return fallback.getResource(fallbackPath);
+		}));
 	}
 
 	/**

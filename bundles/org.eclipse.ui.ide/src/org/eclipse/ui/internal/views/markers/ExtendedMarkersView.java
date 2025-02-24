@@ -98,15 +98,19 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.ide.ResourceUtil;
+import org.eclipse.ui.internal.WorkbenchPage;
+import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.internal.ide.StatusUtil;
 import org.eclipse.ui.menus.IMenuService;
 import org.eclipse.ui.operations.RedoActionHandler;
 import org.eclipse.ui.operations.UndoActionHandler;
+import org.eclipse.ui.part.ISetSelectionTarget;
 import org.eclipse.ui.part.MarkerTransfer;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 import org.eclipse.ui.statushandlers.StatusManager;
+import org.eclipse.ui.views.WorkbenchViewerSetup;
 import org.eclipse.ui.views.markers.MarkerField;
 import org.eclipse.ui.views.markers.MarkerItem;
 import org.eclipse.ui.views.markers.internal.ContentGeneratorDescriptor;
@@ -253,6 +257,7 @@ public class ExtendedMarkersView extends ViewPart {
 
 		viewer = new MarkersTreeViewer(new Tree(parent, SWT.H_SCROLL
 				/*| SWT.VIRTUAL */| SWT.V_SCROLL | SWT.MULTI | SWT.FULL_SELECTION));
+		WorkbenchViewerSetup.setupViewer(viewer);
 		viewer.getTree().setLinesVisible(true);
 		viewer.setUseHashlookup(true);
 		createColumns(new TreeColumn[0], new int[0]);
@@ -578,9 +583,10 @@ public class ExtendedMarkersView extends ViewPart {
 	IMarker[] getOpenableMarkers() {
 		HashSet<IMarker> result = new HashSet<>();
 		for (Object o : viewer.getStructuredSelection()) {
-			MarkerSupportItem next = (MarkerSupportItem) o;
-			if (next.isConcrete()) {
-				result.add(((MarkerEntry) next).getMarker());
+			if (o instanceof MarkerSupportItem next) {
+				if (next.isConcrete()) {
+					result.add(((MarkerEntry) next).getMarker());
+				}
 			}
 		}
 		if (result.isEmpty()) {
@@ -869,18 +875,20 @@ public class ExtendedMarkersView extends ViewPart {
 		final List<IMarker> result = new ArrayList<>(structured.size());
 		MarkerCategory lastCategory = null;
 		for (Iterator<?> i = structured.iterator(); i.hasNext();) {
-			final MarkerSupportItem next = (MarkerSupportItem) i.next();
-			if (next.isConcrete()) {
-				if (lastCategory != null && lastCategory == next.getParent()) {
-					continue;
-				}
-				result.add(next.getMarker());
-			} else {
-				lastCategory = (MarkerCategory) next;
-				final MarkerEntry[] children = (MarkerEntry[]) lastCategory.getChildren();
+			Object item = i.next();
+			if (item instanceof MarkerSupportItem next) {
+				if (next.isConcrete()) {
+					if (lastCategory != null && lastCategory == next.getParent()) {
+						continue;
+					}
+					result.add(next.getMarker());
+				} else {
+					lastCategory = (MarkerCategory) next;
+					final MarkerEntry[] children = (MarkerEntry[]) lastCategory.getChildren();
 
-				for (MarkerEntry element : children) {
-					result.add(element.getMarker());
+					for (MarkerEntry element : children) {
+						result.add(element.getMarker());
+					}
 				}
 			}
 		}
@@ -1140,13 +1148,39 @@ public class ExtendedMarkersView extends ViewPart {
 
 	/**
 	 * Open the selected markers
+	 *
+	 * @since 3.18
 	 */
-	void openSelectedMarkers() {
+
+	protected void openSelectedMarkers() {
 		IMarker[] markers = getOpenableMarkers();
 		for (IMarker marker : markers) {
 			IWorkbenchPage page = getSite().getPage();
 			openMarkerInEditor(marker, page);
 		}
+	}
+
+	/**
+	 * Checks if there is a filter currently enabled.
+	 *
+	 * @since 3.20
+	 *
+	 * @return true if a filter is enabled, false if no filter is enabled.
+	 *
+	 */
+	public boolean isFilterEnabled() {
+		return generator != null && generator.getEnabledFilters().size() > 0;
+	}
+
+	/**
+	 * Checks if there is a limit on the number of items displayed.
+	 *
+	 * @since 3.20
+	 *
+	 * @return true if a limits enabled, false if no limits.
+	 */
+	public boolean isMarkerLimitsEnabled() {
+		return generator != null && generator.isMarkerLimitsEnabled();
 	}
 
 	/**
@@ -1348,21 +1382,24 @@ public class ExtendedMarkersView extends ViewPart {
 	 * @param newSelection
 	 */
 	void updateStatusLine(IStructuredSelection newSelection) {
-		String message;
+		String message = null;
 
 		if (newSelection == null || newSelection.isEmpty()) {
 			message = MarkerSupportInternalUtilities.EMPTY_STRING;
 		} else if (newSelection.size() == 1) {
 			// Use the Message attribute of the marker
-			message = ((MarkerSupportItem) newSelection.getFirstElement()).getDescription();
+			if (newSelection.getFirstElement() instanceof MarkerSupportItem element) {
+				message = element.getDescription();
+			}
 
 		} else {
 			Iterator<?> elements = newSelection.iterator();
 			Collection<MarkerSupportItem> result = new ArrayList<>();
 			while (elements.hasNext()) {
-				MarkerSupportItem next = (MarkerSupportItem) elements.next();
-				if (next.isConcrete()) {
-					result.add(next);
+				if (elements.next() instanceof MarkerSupportItem next) {
+					if (next.isConcrete()) {
+						result.add(next);
+					}
 				}
 			}
 			MarkerEntry[] entries = new MarkerEntry[result.size()];
@@ -1596,10 +1633,37 @@ public class ExtendedMarkersView extends ViewPart {
 
 		if (marker != null && marker.getResource() instanceof IFile) {
 			try {
-				IDE.openEditor(page, marker, OpenStrategy.activateOnOpen());
+				if (IDE.openEditor(page, marker, OpenStrategy.activateOnOpen()) != null) {
+					return;
+				}
 			} catch (PartInitException e) {
 				MarkerSupportInternalUtilities.showViewError(e);
 			}
+		}
+
+		showIn(marker, page, page.getPerspective().getDefaultShowIn());
+	}
+
+	private static boolean showIn(IMarker marker, IWorkbenchPage page, String targetPartId) {
+		if (targetPartId == null || WorkbenchPlugin.getDefault().getViewRegistry().find(targetPartId) == null) {
+			return false;
+		}
+		ISelection selection = new StructuredSelection(marker.getResource());
+		try {
+			IViewPart view = page.showView(targetPartId);
+			if (view == null) {
+				return false;
+			}
+			ISetSelectionTarget target = Adapters.adapt(view, ISetSelectionTarget.class);
+			if (target == null) {
+				return false;
+			}
+			target.selectReveal(selection);
+			((WorkbenchPage) page).performedShowIn(targetPartId);
+			return true;
+		} catch (PartInitException e) {
+			MarkerSupportInternalUtilities.showViewError(e);
+			return false;
 		}
 	}
 
@@ -1678,5 +1742,13 @@ public class ExtendedMarkersView extends ViewPart {
 	 */
 	boolean isVisible() {
 		return isViewVisible;
+	}
+
+	@Override
+	public <T> T getAdapter(Class<T> adapter) {
+		if (adapter == MarkersTreeViewer.class) {
+			return adapter.cast(viewer);
+		}
+		return super.getAdapter(adapter);
 	}
 }

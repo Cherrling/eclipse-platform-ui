@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2023 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -19,6 +19,7 @@ import java.util.List;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Item;
+import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipse.ui.tests.harness.util.DisplayHelper;
 
@@ -89,7 +90,7 @@ public abstract class AbstractTreeViewerTest extends StructuredItemViewerTest {
 	public void testDeleteChildren() {
 		TestElement first = fRootElement.getFirstChild();
 		first.deleteChildren();
-		assertTrue("no children", getItemCount(first) == 0);
+		assertEquals("no children", 0, getItemCount(first));
 	}
 
 	public void testDeleteChildrenExpanded() {
@@ -99,7 +100,7 @@ public abstract class AbstractTreeViewerTest extends StructuredItemViewerTest {
 		assertNotNull("first child is visible", fViewer.testFindItem(first2));
 
 		first.deleteChildren();
-		assertTrue("no children", getItemCount(first) == 0);
+		assertEquals("no children", 0, getItemCount(first));
 	}
 
 	public void testExpand() {
@@ -156,7 +157,7 @@ public abstract class AbstractTreeViewerTest extends StructuredItemViewerTest {
 		fTreeViewer.expandToLevel(first2, 0);
 
 		fTreeViewer.addFilter(new TestLabelFilter());
-		assertTrue("filtered count", getItemCount() == 5);
+		assertEquals("filtered count", 5, getItemCount());
 	}
 
 	public void testInsertChildReveal() {
@@ -280,6 +281,53 @@ public abstract class AbstractTreeViewerTest extends StructuredItemViewerTest {
 		fRootElement.addChild(child, new TestModelChange(TestModelChange.INSERT, fRootElement, child));
 		int postCount = getItemCount(parent);
 		assertEquals("Same element added to a parent twice.", initialCount, postCount);
+	}
+
+	/**
+	 * Test for Bug 571844 - assert that an item is not added twice if the
+	 * comparator returns 0 = equal for more than one tree item. Problem was that
+	 * the method AbstractTreeViewer#createAddedElements only searched forward but
+	 * not backwards for an equal element, if the comparator returned 0. The example
+	 * below is a case where the previous implementation would fail.
+	 */
+	public void testChildIsNotDuplicatedWhenCompareEquals() {
+		fTreeViewer.setComparator(new TestLabelComparator());
+		fRootElement.deleteChildren();
+
+		TestElement child1 = fRootElement.addChild(TestModelChange.INSERT);
+		child1.setLabel("1");
+		TestElement child2 = fRootElement.addChild(TestModelChange.INSERT);
+		child2.setLabel("1");
+		TestElement child3 = fRootElement.addChild(TestModelChange.INSERT);
+		child3.setLabel("0");
+
+		// Every duplicated element must not be added as TreeItem.
+		fRootElement.addChild(child1, new TestModelChange(TestModelChange.INSERT, fRootElement, child1));
+		fRootElement.addChild(child2, new TestModelChange(TestModelChange.INSERT, fRootElement, child2));
+		fRootElement.addChild(child3, new TestModelChange(TestModelChange.INSERT, fRootElement, child3));
+
+		Tree tree = (Tree) fTreeViewer.getControl();
+		assertEquals("Same element added to parent twice.", 3, tree.getItems().length);
+	}
+
+	public void testContains() {
+		// some random element.
+		assertFalse("element must not be available on the viewer", fTreeViewer.contains(fRootElement, ""));
+
+		// first child of root.
+		assertTrue("element must be available on the viewer",
+				fTreeViewer.contains(fRootElement, fRootElement.getFirstChild()));
+
+		// last child of the root
+		assertTrue("element must be available on the viewer",
+				fTreeViewer.contains(fRootElement, fRootElement.getLastChild()));
+		// child of first element is not expanded
+		assertFalse("element must not be available on the viewer",
+				fTreeViewer.contains(fRootElement.getFirstChild(), fRootElement.getFirstChild().getFirstChild()));
+		fTreeViewer.expandAll();
+		// child of first element when expanded.
+		assertTrue("element must be available on the viewer",
+				fTreeViewer.contains(fRootElement.getFirstChild(), fRootElement.getFirstChild().getFirstChild()));
 	}
 
 	@Override

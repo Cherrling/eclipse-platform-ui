@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2015 IBM Corporation and others.
+ * Copyright (c) 2004, 2023 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -10,6 +10,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Hannes Wellmann - Parameterize DeviceResourceDescriptor with the described resource type
  *******************************************************************************/
 package org.eclipse.jface.resource;
 
@@ -25,11 +26,54 @@ import org.eclipse.swt.graphics.Device;
  * two equal descriptors at hand, e.g. decorating an identical object.
  * </p>
  *
+ * @param <R> The resource's type described by this descriptor
+ *
  * @see org.eclipse.jface.resource.ResourceManager
  *
  * @since 3.1
  */
-public abstract class DeviceResourceDescriptor {
+public abstract class DeviceResourceDescriptor<R> {
+	private final boolean shouldBeCached;
+
+	/**
+	 * default constructor with shouldBeCached=false
+	 */
+	public DeviceResourceDescriptor() {
+		this(false);
+	}
+
+	/**
+	 * @param shouldBeCached Indicates if the resource instance described by the
+	 *                       descriptor should to be kept by {@link ResourceManager}
+	 *                       even if all references to the resource are lost (due to
+	 *                       {@link ResourceManager#destroy(DeviceResourceDescriptor)}).<br>
+	 *                       Should return true for resources that are costly to
+	 *                       create (for example by involving I/O Operation). Has
+	 *                       only an effect if caching is enabled (see
+	 *                       org.eclipse.jface.resource.JFaceResources#cacheSize).
+	 *                       Caching relies on {@link #equals(Object)} and
+	 *                       {@link #hashCode()}. For equal
+	 *                       DeviceResourceDescriptors the same Resource instance is
+	 *                       returned by the {@link ResourceManager} instance return
+	 *                       by
+	 *                       {@link org.eclipse.jface.resource.JFaceResources#getResources(org.eclipse.swt.widgets.Display)}
+	 *                       as long as the cache is big enough to cache all
+	 *                       resources.<br>
+	 *                       Instances which equal (in terms of
+	 *                       {@link #equals(Object)}) must have the same
+	 *                       shouldBeCached mode.
+	 * @see LazyResourceManager
+	 * @since 3.24
+	 */
+	protected DeviceResourceDescriptor(boolean shouldBeCached) {
+		this.shouldBeCached = shouldBeCached;
+
+	}
+
+	final boolean shouldBeCached() {
+		return shouldBeCached;
+	}
+
 	/**
 	 * Creates the resource described by this descriptor
 	 *

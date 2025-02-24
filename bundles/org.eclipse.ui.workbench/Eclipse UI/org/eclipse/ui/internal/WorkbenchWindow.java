@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -63,6 +63,7 @@ import org.eclipse.e4.core.services.log.Logger;
 import org.eclipse.e4.ui.di.UIEventTopic;
 import org.eclipse.e4.ui.internal.workbench.E4Workbench;
 import org.eclipse.e4.ui.internal.workbench.PartServiceSaveHandler;
+import org.eclipse.e4.ui.internal.workbench.UIExtensionTracker;
 import org.eclipse.e4.ui.internal.workbench.URIHelper;
 import org.eclipse.e4.ui.internal.workbench.renderers.swt.IUpdateService;
 import org.eclipse.e4.ui.model.application.MApplication;
@@ -186,7 +187,6 @@ import org.eclipse.ui.internal.progress.ProgressRegion;
 import org.eclipse.ui.internal.provisional.application.IActionBarConfigurer2;
 import org.eclipse.ui.internal.registry.IActionSetDescriptor;
 import org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants;
-import org.eclipse.ui.internal.registry.UIExtensionTracker;
 import org.eclipse.ui.internal.services.EvaluationReference;
 import org.eclipse.ui.internal.services.IServiceLocatorCreator;
 import org.eclipse.ui.internal.services.IWorkbenchLocationService;
@@ -494,7 +494,8 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 				@Override
 				public Object compute(IEclipseContext context, String contextKey) {
 					if (tracker == null) {
-						tracker = new UIExtensionTracker(getWorkbench().getDisplay());
+						tracker = new UIExtensionTracker(getWorkbench().getDisplay()::asyncExec,
+								WorkbenchPlugin.getDefault().getLog());
 					}
 					return tracker;
 				}
@@ -945,7 +946,7 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 					int dialogResponse = MessageDialog.open(MessageDialog.QUESTION, getShell(),
 							WorkbenchMessages.Workbench_zoomChangedTitle,
 							WorkbenchMessages.Workbench_zoomChangedMessage, SWT.NONE,
-							WorkbenchMessages.Workbench_zoomChangedRestart, IDialogConstants.NO_LABEL);
+							WorkbenchMessages.Workbench_RestartButton, WorkbenchMessages.Workbench_DontRestartButton);
 					if (event.doit && dialogResponse == 0) {
 						getWorkbenchImpl().restart(true);
 					}
@@ -1342,7 +1343,7 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 		List<IConfigurationElement> handledElements = new ArrayList<>();
 		handledElements.add(items.get(0)); // Hack!! startup seeding
 		MUIElement createdTrim = null;
-		while (items.size() > 0 && handledElements.size() > 0) {
+		while (!items.isEmpty() && !handledElements.isEmpty()) {
 			handledElements.clear();
 
 			for (IConfigurationElement item : items) {
@@ -2174,7 +2175,7 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 						// do nothing
 					}
 				}
-				if (dirtyParts != null && dirtyParts.size() > 0) {
+				if (!dirtyParts.isEmpty()) {
 					ISaveHandler saveHandler = context.get(ISaveHandler.class);
 					if (saveHandler != null) {
 						if (saveHandler instanceof WWinPartServiceSaveHandler) {
@@ -2630,8 +2631,7 @@ public class WorkbenchWindow implements IWorkbenchWindow {
 	 */
 	private boolean getShowHeapStatus() {
 		return // Show if the preference is set or debug option is on
-		PrefUtil.getAPIPreferenceStore().getBoolean(IWorkbenchPreferenceConstants.SHOW_MEMORY_MONITOR) || Boolean
-				.valueOf(Platform.getDebugOption(PlatformUI.PLUGIN_ID + "/perf/showHeapStatus")).booleanValue(); //$NON-NLS-1$
+		PrefUtil.getAPIPreferenceStore().getBoolean(IWorkbenchPreferenceConstants.SHOW_MEMORY_MONITOR) || Boolean.parseBoolean(Platform.getDebugOption(PlatformUI.PLUGIN_ID + "/perf/showHeapStatus")); //$NON-NLS-1$
 	}
 
 	public void showHeapStatus(boolean show) {

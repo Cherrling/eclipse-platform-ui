@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corporation and others.
+ * Copyright (c) 2000, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -20,7 +20,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.eclipse.ui.internal.WorkbenchMessages;
 import org.eclipse.ui.internal.WorkbenchPlugin;
@@ -82,10 +81,10 @@ public final class XMLMemento implements IMemento {
 	public static XMLMemento createReadRoot(Reader reader, String baseDir) throws WorkbenchException {
 		String errorMessage = null;
 		Exception exception = null;
-
 		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder parser = factory.newDocumentBuilder();
+			@SuppressWarnings("restriction")
+			DocumentBuilder parser = org.eclipse.core.internal.runtime.XmlProcessorFactory
+					.createDocumentBuilderWithErrorOnDOCTYPE();
 			InputSource source = new InputSource(reader);
 			if (baseDir != null) {
 				source.setSystemId(baseDir);
@@ -146,14 +145,13 @@ public final class XMLMemento implements IMemento {
 	 *                      type
 	 */
 	public static XMLMemento createWriteRoot(String type) throws DOMException {
-		Document document;
 		try {
-			document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+			@SuppressWarnings("restriction")
+			Document document = org.eclipse.core.internal.runtime.XmlProcessorFactory.newDocumentWithErrorOnDOCTYPE();
 			Element element = document.createElement(type);
 			document.appendChild(element);
 			return new XMLMemento(document, element);
 		} catch (ParserConfigurationException e) {
-//            throw new Error(e);
 			throw new Error(e.getMessage());
 		}
 	}

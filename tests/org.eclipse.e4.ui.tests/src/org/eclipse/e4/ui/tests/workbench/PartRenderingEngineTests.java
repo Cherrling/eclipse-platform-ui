@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corporation and others.
+ * Copyright (c) 2009, 2023 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -100,19 +100,8 @@ public class PartRenderingEngineTests {
 	@Rule
 	public TestName testName = new TestName();
 
-	// private boolean checkMacBug466636() {
-	// if (Platform.OS_MACOSX.equals(Platform.getOS())) {
-	// System.out.println("skipping " + PartRenderingEngineTests.class.getName() +
-	// "#"
-	// + this.getClass().getSimpleName()
-	// + " on Mac for now, see bug 466636");
-	// return true;
-	// }
-	// return false;
-	// }
-
 	@Before
-	public void setUp() throws Exception {
+	public void setUp() {
 		logged = false;
 
 		LogReaderService logReaderService = appContext.get(LogReaderService.class);
@@ -164,8 +153,8 @@ public class PartRenderingEngineTests {
 		try {
 			advisor.eventLoopException(ex);
 		} catch (Throwable t) {
-			if (t instanceof ThreadDeath) {
-				throw (ThreadDeath) t;
+			if (t instanceof ThreadDeath td) {
+				throw td;
 			}
 			// couldn't handle the exception, print to console
 			t.printStackTrace();
@@ -243,7 +232,7 @@ public class PartRenderingEngineTests {
 	}
 
 	@Test
-	public void testPartStack_SetActiveChild2Bug299379() throws Exception {
+	public void testPartStack_SetActiveChild2Bug299379() {
 		MWindow window = ems.createModelElement(MWindow.class);
 		application.getChildren().add(window);
 
@@ -275,7 +264,7 @@ public class PartRenderingEngineTests {
 	}
 
 	@Test
-	public void testPartStack_SetActiveChild3Bug299379() throws Exception {
+	public void testPartStack_SetActiveChild3Bug299379() {
 		MPartDescriptor descriptor = ems.createModelElement(MPartDescriptor.class);
 		descriptor
 				.setContributionURI("bundleclass://org.eclipse.e4.ui.tests/org.eclipse.e4.ui.tests.workbench.SampleView");
@@ -306,7 +295,7 @@ public class PartRenderingEngineTests {
 	}
 
 	@Test
-	public void testPartStack_SetActiveChild4Bug299379() throws Exception {
+	public void testPartStack_SetActiveChild4Bug299379() {
 		MWindow window = ems.createModelElement(MWindow.class);
 		application.getChildren().add(window);
 
@@ -336,7 +325,7 @@ public class PartRenderingEngineTests {
 	}
 
 	@Test
-	public void testPartStack_SetActiveChild5Bug295250() throws Exception {
+	public void testPartStack_SetActiveChild5Bug295250() {
 		MWindow window = ems.createModelElement(MWindow.class);
 		application.getChildren().add(window);
 
@@ -363,7 +352,7 @@ public class PartRenderingEngineTests {
 	}
 
 	@Test
-	public void testPartStack_SetActiveChild6Bug298797() throws Exception {
+	public void testPartStack_SetActiveChild6Bug298797() {
 		MWindow window = ems.createModelElement(MWindow.class);
 		application.getChildren().add(window);
 
@@ -393,7 +382,7 @@ public class PartRenderingEngineTests {
 	}
 
 	@Test
-	public void testPartStack_ViewMenuHidenWhenPartsClosed_Bug377228() throws Exception {
+	public void testPartStack_ViewMenuHidenWhenPartsClosed_Bug377228() {
 		MWindow window = ems.createModelElement(MWindow.class);
 		application.getChildren().add(window);
 
@@ -421,7 +410,7 @@ public class PartRenderingEngineTests {
 				toolbar = (ToolBar) child;
 			}
 		}
-		assertTrue(toolbar != null);
+		assertNotNull(toolbar);
 
 		assertTrue(toolbar.getVisible());
 
@@ -433,7 +422,7 @@ public class PartRenderingEngineTests {
 	}
 
 	@Test
-	public void testPartStack_ViewMenuShowWhenItemsAdded_Bug385083() throws Exception {
+	public void testPartStack_ViewMenuShowWhenItemsAdded_Bug385083() {
 		MWindow window = ems.createModelElement(MWindow.class);
 		application.getChildren().add(window);
 
@@ -458,7 +447,7 @@ public class PartRenderingEngineTests {
 				toolbar = (ToolBar) child;
 			}
 		}
-		assertTrue(toolbar != null);
+		assertNotNull(toolbar);
 
 		assertFalse(toolbar.getVisible());
 
@@ -476,7 +465,7 @@ public class PartRenderingEngineTests {
 	}
 
 	@Test
-	public void testCreateGuiBug301021() throws Exception {
+	public void testCreateGuiBug301021() {
 		// create two descriptors
 		MPartDescriptor descriptor = ems.createModelElement(MPartDescriptor.class);
 		descriptor
@@ -562,7 +551,7 @@ public class PartRenderingEngineTests {
 	}
 
 	@Test
-	public void testPart_ToBeRendered2() throws Exception {
+	public void testPart_ToBeRendered2() {
 		MWindow window = ems.createModelElement(MWindow.class);
 		application.getChildren().add(window);
 
@@ -801,9 +790,8 @@ public class PartRenderingEngineTests {
 			assertNull("Changing the TBR of all elements to false should have set the field to null",
 					container.getSelectedElement());
 		} else {
-			assertTrue(
-					"Changing the TBR of the selected element should have set the field to null",
-					container.getSelectedElement() == null);
+			assertNull("Changing the TBR of the selected element should have set the field to null",
+					container.getSelectedElement());
 		}
 	}
 
@@ -837,17 +825,16 @@ public class PartRenderingEngineTests {
 		// the selected element doesn't change its value
 		container.setSelectedElement(partA);
 		container.getChildren().remove(partB);
-		assertTrue(
+		assertEquals(
 				"Changing the parent of a non-selected element should not change the value of the container's seletedElement",
-				container.getSelectedElement() == partA);
+				partA, container.getSelectedElement());
 
 		// Ensure that changing the parent of the selected element
 		// results in it going null
 		container.setSelectedElement(partA);
 		container.getChildren().remove(partA);
-		assertTrue(
-				"Changing the parent of the selected element should have set the field to null",
-				container.getSelectedElement() == null);
+		assertNull("Changing the parent of the selected element should have set the field to null",
+				container.getSelectedElement());
 	}
 
 	@Test
@@ -910,7 +897,7 @@ public class PartRenderingEngineTests {
 	}
 
 	@Test
-	public void testRemoveGuiBug324033() throws Exception {
+	public void testRemoveGuiBug324033() {
 		MWindow window = ems.createModelElement(MWindow.class);
 		application.getChildren().add(window);
 		application.setSelectedElement(window);
@@ -982,7 +969,7 @@ public class PartRenderingEngineTests {
 	}
 
 	@Test
-	public void testBug324839() throws Exception {
+	public void testBug324839() {
 		// if (checkMacBug466636())
 		// return;
 
@@ -2479,9 +2466,10 @@ public class PartRenderingEngineTests {
 		partService.hidePart(partB);
 		partService.hidePart(partC);
 		contextRule.spinEventLoop();
-		assertTrue("CleanupAddon should ensure that partStack is not rendered anymore, as all childs have been removed",
-				!partStackForPartBPartC.isToBeRendered());
-		assertTrue("Part stack should be removed", !partStackForPartBPartC.isToBeRendered());
+		assertFalse(
+				"CleanupAddon should ensure that partStack is not rendered anymore, as all childs have been removed",
+				partStackForPartBPartC.isToBeRendered());
+		assertFalse("Part stack should be removed", partStackForPartBPartC.isToBeRendered());
 		// PartStack with IPresentationEngine.NO_AUTO_COLLAPSE should not be removed
 		// even if children are removed
 		partService.hidePart(editor, true);
@@ -2559,14 +2547,14 @@ public class PartRenderingEngineTests {
 
 		contextRule.createAndRunWorkbench(window);
 
-		assertTrue(part.getContext() != null);
-		assertTrue(part.getContext().getParent() == detachedWindow.getContext());
+		assertNotNull(part.getContext());
+		assertEquals(detachedWindow.getContext(), part.getContext().getParent());
 
 		detachedWindow.getChildren().remove(part);
 		window.getChildren().add(part);
 
-		assertTrue(part.getContext() != null);
-		assertTrue(part.getContext().getParent() == window.getContext());
+		assertNotNull(part.getContext());
+		assertEquals(part.getContext().getParent(), window.getContext());
 	}
 
 	@Test
@@ -2589,14 +2577,14 @@ public class PartRenderingEngineTests {
 
 		contextRule.createAndRunWorkbench(window);
 
-		assertTrue(part.getContext() != null);
-		assertTrue(part.getContext().getParent() == detachedWindow.getContext());
+		assertNotNull(part.getContext());
+		assertEquals(part.getContext().getParent(), detachedWindow.getContext());
 
 		detachedWindow.getChildren().remove(stack);
 		window.getChildren().add(stack);
 
-		assertTrue(part.getContext() != null);
-		assertTrue(part.getContext().getParent() == window.getContext());
+		assertNotNull(part.getContext());
+		assertEquals(part.getContext().getParent(), window.getContext());
 	}
 
 	@Test
@@ -2623,14 +2611,14 @@ public class PartRenderingEngineTests {
 
 		contextRule.createAndRunWorkbench(window);
 
-		assertTrue(part.getContext() != null);
-		assertTrue(part.getContext().getParent() == detachedWindow.getContext());
+		assertNotNull(part.getContext());
+		assertEquals(part.getContext().getParent(), detachedWindow.getContext());
 
 		detachedWindow.getChildren().remove(stack);
 		window.getChildren().add(stack);
 
-		assertTrue(part.getContext() != null);
-		assertTrue(part.getContext().getParent() == window.getContext());
+		assertNotNull(part.getContext());
+		assertEquals(part.getContext().getParent(), window.getContext());
 	}
 
 	@Test
@@ -2662,14 +2650,14 @@ public class PartRenderingEngineTests {
 
 		contextRule.createAndRunWorkbench(window);
 
-		assertTrue(part.getContext() != null);
-		assertTrue(part.getContext().getParent() == window.getContext());
+		assertNotNull(part.getContext());
+		assertEquals(part.getContext().getParent(), window.getContext());
 
 		stack.getChildren().remove(ph);
 		detachedStack.getChildren().add(ph);
 
-		assertTrue(part.getContext() != null);
-		assertTrue(part.getContext().getParent() == detachedWindow.getContext());
+		assertNotNull(part.getContext());
+		assertEquals(part.getContext().getParent(), detachedWindow.getContext());
 	}
 
 	@Test

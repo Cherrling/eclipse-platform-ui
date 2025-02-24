@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2020 IBM Corporation and others.
+ * Copyright (c) 2003, 2022 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,6 +14,7 @@
  *     		- Fix for Bug 151204 [Progress] Blocked status of jobs are not applied/reported
  *     Lars Vogel <Lars.Vogel@gmail.com> - Bug 422040
  *     Terry Parker - Bug 454633, Report the cumulative error status of job groups in the ProgressManager
+ *     Christoph Läubrich - Issue #8
  *******************************************************************************/
 package org.eclipse.ui.internal.progress;
 
@@ -60,6 +61,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.Throttler;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
@@ -575,16 +577,28 @@ public class ProgressManager extends ProgressProvider implements IProgressServic
 
 	@Override
 	public IProgressMonitor getDefaultMonitor() {
+		return monitorFor(null);
+	}
+
+	@Override
+	public IProgressMonitor monitorFor(IProgressMonitor monitor) {
 		// only need a default monitor for operations the UI thread
 		// and only if there is a display
 		Display display;
 		if (PlatformUI.isWorkbenchRunning() && !PlatformUI.getWorkbench().isStarting()) {
 			display = PlatformUI.getWorkbench().getDisplay();
-			if (!display.isDisposed() && (display.getThread() == Thread.currentThread())) {
-				return new EventLoopProgressMonitor(new NullProgressMonitor());
+			boolean isDisplayThread;
+			try {
+				isDisplayThread = !display.isDisposed() && (display.getThread() == Thread.currentThread());
+			} catch (SWTException deviceDisposed) {
+				// Maybe disposed after .isDisposed() check.
+				isDisplayThread = false;
+			}
+			if (isDisplayThread) {
+				return new EventLoopProgressMonitor(IProgressMonitor.nullSafe(monitor));
 			}
 		}
-		return super.getDefaultMonitor();
+		return IProgressMonitor.nullSafe(monitor);
 	}
 
 	/**
@@ -624,6 +638,7 @@ public class ProgressManager extends ProgressProvider implements IProgressServic
 	 * @param info the updated job info
 	 */
 	public void refreshJobInfo(JobInfo info) {
+		checkForStaleness(info.getJob());
 		synchronized (pendingUpdatesMutex) {
 			Predicate<IJobProgressManagerListener> predicate = listener -> !isNeverDisplaying(info.getJob(), listener.showsDebug());
 			rememberListenersForJob(info, pendingJobUpdates, predicate);

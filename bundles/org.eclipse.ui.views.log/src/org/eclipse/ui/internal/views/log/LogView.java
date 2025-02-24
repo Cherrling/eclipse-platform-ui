@@ -27,12 +27,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -43,6 +43,7 @@ import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.util.Policy;
+import org.eclipse.jface.util.Throttler;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.window.Window;
 import org.eclipse.osgi.framework.log.FrameworkLogEntry;
@@ -123,7 +124,7 @@ public class LogView extends ViewPart implements LogListener {
 	private File fInputFile;
 	private String fDirectory;
 
-	private Comparator fComparator;
+	private Comparator<?> fComparator;
 
 	// hover text
 	private boolean fCanOpenTextShell;
@@ -149,6 +150,8 @@ public class LogView extends ViewPart implements LogListener {
 	private Action fOpenLogAction;
 	private Action fExportLogAction;
 	private Action fExportLogEntryAction;
+	private Throttler mutualRefresh;
+	private Throttler mutualActivate;
 
 	/**
 	 * Action called when user selects "Group by -&gt; ..." from menu.
@@ -576,6 +579,9 @@ public class LogView extends ViewPart implements LogListener {
 		fFilteredTree.setLayoutData(new GridData(GridData.FILL_BOTH));
 		fFilteredTree.setInitialText(Messages.LogView_show_filter_initialText);
 		fTree = fFilteredTree.getViewer().getTree();
+		mutualRefresh = createMutualRefresh(fTree.getDisplay());
+		mutualActivate = createMutualActivate(fTree.getDisplay());
+
 		fTree.setLinesVisible(true);
 		createColumns(fTree);
 		fFilteredTree.getViewer().setAutoExpandLevel(2);
@@ -701,7 +707,7 @@ public class LogView extends ViewPart implements LogListener {
 			return;
 		}
 
-		File file = new Path(path).toFile();
+		File file = IPath.fromOSString(path).toFile();
 		if (file.exists()) {
 			handleImportPath(path);
 		} else {
@@ -753,7 +759,7 @@ public class LogView extends ViewPart implements LogListener {
 		if (path != null) {
 			if (path.indexOf('.') == -1 && !path.endsWith(".log")) //$NON-NLS-1$
 				path += ".log"; //$NON-NLS-1$
-			File outputFile = new Path(path).toFile();
+			File outputFile = IPath.fromOSString(path).toFile();
 			fDirectory = outputFile.getParent();
 			if (outputFile.exists()) {
 				String message = NLS.bind(Messages.LogView_confirmOverwrite_message, outputFile.toString());
@@ -823,7 +829,7 @@ public class LogView extends ViewPart implements LogListener {
 	}
 
 	public AbstractEntry[] getElements() {
-		return elements.toArray(new AbstractEntry[elements.size()]);
+		return elements.toArray(new AbstractEntry[0]);
 	}
 
 	public void handleClear() {
@@ -1127,21 +1133,13 @@ public class LogView extends ViewPart implements LogListener {
 	private LogEntry createLogEntry(org.osgi.service.log.LogEntry input) {
 		// create a status from OSGi LogEntry
 		LogLevel logLevel = input.getLogLevel();
-		int severity;
-		switch (logLevel) {
-		case ERROR:
-			severity = IStatus.ERROR;
-			break;
-		case WARN:
-			severity = IStatus.WARNING;
-			break;
-		case INFO:
-			severity = IStatus.INFO;
-			break;
-		case DEBUG:
-		default:
-			severity = IStatus.OK;
-		}
+		int severity = switch (logLevel) {
+		case ERROR -> IStatus.ERROR;
+		case WARN -> IStatus.WARNING;
+		case INFO -> IStatus.INFO;
+		case DEBUG -> IStatus.OK;
+		default -> IStatus.OK;
+		};
 		IStatus status = new Status(severity, input.getBundle().getSymbolicName(), input.getMessage(),
 				input.getException());
 		return createLogEntry(status);
@@ -1169,53 +1167,72 @@ public class LogView extends ViewPart implements LogListener {
 		asyncRefresh(true);
 	}
 
+	private Throttler createMutualRefresh(Display display) {
+		return new Throttler(display, Duration.ofMillis(16), () -> {
+			if (!fTree.isDisposed()) {
+				TreeViewer viewer = fFilteredTree.getViewer();
+				viewer.refresh();
+				viewer.expandToLevel(2);
+				fTree.setEnabled(true);
+				boolean exists = fInputFile.exists();
+				boolean enabled = exists && fInputFile.equals(Platform.getLogFileLocation().toFile());
+				fDeleteLogAction.setEnabled(enabled);
+				fOpenLogAction.setEnabled(exists);
+				fExportLogAction.setEnabled(exists);
+				fExportLogEntryAction.setEnabled(!viewer.getSelection().isEmpty());
+			}
+			if (!isDisposed()) {
+				// fFilteredTree.getViewer().refresh(); // why again?
+				fFilteredTree.setEnabled(true);
+			}
+		});
+	}
+
+	private Throttler createMutualActivate(Display display) {
+		return new Throttler(display, Duration.ofMillis(500), () -> {
+			if (!fTree.isDisposed()) {
+				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+				if (window != null) {
+					IWorkbenchPage page = window.getActivePage();
+					if (page != null) {
+						final ViewPart view = LogView.this;
+						page.bringToTop(view);
+					}
+				}
+			}
+		});
+	}
+
 	private void asyncRefresh(final boolean activate) {
 		if (fTree.isDisposed())
 			return;
-		Display display = fTree.getDisplay();
-		final ViewPart view = this;
-		if (display != null) {
-			display.asyncExec(() -> {
-				if (!fTree.isDisposed()) {
-					TreeViewer viewer = fFilteredTree.getViewer();
-					viewer.refresh();
-					viewer.expandToLevel(2);
-					fTree.setEnabled(true);
-					fDeleteLogAction.setEnabled(
-							fInputFile.exists() && fInputFile.equals(Platform.getLogFileLocation().toFile()));
-					fOpenLogAction.setEnabled(fInputFile.exists());
-					fExportLogAction.setEnabled(fInputFile.exists());
-					fExportLogEntryAction.setEnabled(!viewer.getSelection().isEmpty());
-					if (activate && fActivateViewAction.isChecked()) {
-						IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-						if (window != null) {
-							IWorkbenchPage page = window.getActivePage();
-							if (page != null) {
-								page.bringToTop(view);
-							}
-						}
-					}
-				}
-				if (!isDisposed()) {
-					fFilteredTree.getViewer().refresh();
-					fFilteredTree.setEnabled(true);
-				}
-			});
+		mutualRefresh.throttledExec();
+		if (activate && fActivateViewAction.isChecked()) {
+			mutualActivate.throttledExec();
 		}
 	}
 
 	@Override
 	public void setFocus() {
-		if (!isDisposed()) {
-			if (fMemento.getBoolean(P_SHOW_FILTER_TEXT).booleanValue()) {
-				Text filterControl = fFilteredTree.getFilterControl();
-				if (filterControl != null && !filterControl.isDisposed()) {
-					filterControl.setFocus();
+		if (isDisposed()) {
+			return;
+		}
+		if (fMemento.getBoolean(P_SHOW_FILTER_TEXT).booleanValue()) {
+			Text filterControl = fFilteredTree.getFilterControl();
+			if (filterControl != null && !filterControl.isDisposed()) {
+				if (!filterControl.setFocus()) {
+					setFocusToParentComposite();
 				}
-			} else if (!fFilteredTree.isDisposed()) {
-				fFilteredTree.setFocus();
+			}
+		} else if (!fFilteredTree.isDisposed()) {
+			if (!fFilteredTree.setFocus()) {
+				setFocusToParentComposite();
 			}
 		}
+	}
+
+	private void setFocusToParentComposite() {
+		fFilteredTree.getParent().setFocus();
 	}
 
 	private void handleSelectionChanged(IStructuredSelection selection) {
@@ -1524,7 +1541,7 @@ public class LogView extends ViewPart implements LogListener {
 		return 1 + getNumberOfParents(parent);
 	}
 
-	public Comparator getComparator() {
+	public Comparator<?> getComparator() {
 		return fComparator;
 	}
 
@@ -1709,7 +1726,7 @@ public class LogView extends ViewPart implements LogListener {
 	}
 
 	private long getLogMaxTailSize() {
-		return Long.valueOf(this.fMemento.getString(P_LOG_MAX_TAIL_SIZE)).longValue();
+		return Long.parseLong(this.fMemento.getString(P_LOG_MAX_TAIL_SIZE));
 	}
 
 	/**

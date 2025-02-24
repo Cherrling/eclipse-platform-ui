@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.jface.util.Policy;
+import org.eclipse.jface.viewers.internal.ExpandableNode;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.TreeEvent;
 import org.eclipse.swt.events.TreeListener;
@@ -358,6 +359,8 @@ public class TreeViewer extends AbstractTreeViewer {
 			updateCode.run();
 			return;
 		}
+		// avoid costly calls to setSelectionToWidget() and getSelection() during
+		// updateCode.run():
 		insidePreservingSelection = true;
 		try {
 			super.preservingSelection(updateCode, reveal);
@@ -422,8 +425,8 @@ public class TreeViewer extends AbstractTreeViewer {
 			final Object element) {
 		if (checkBusy())
 			return;
-		Item[] selectedItems = getSelection(getControl());
-		TreeSelection selection = (TreeSelection) getSelection();
+		Item[] selectedItems = insidePreservingSelection ? null : getSelection(getControl());
+		TreeSelection selection = insidePreservingSelection ? null : (TreeSelection) getSelection();
 		Widget[] itemsToDisassociate;
 		if (parentElementOrTreePath instanceof TreePath) {
 			TreePath elementPath = ((TreePath) parentElementOrTreePath)
@@ -435,7 +438,9 @@ public class TreeViewer extends AbstractTreeViewer {
 		if (internalIsInputOrEmptyPath(parentElementOrTreePath)) {
 			if (index < tree.getItemCount()) {
 				TreeItem item = tree.getItem(index);
-				selection = adjustSelectionForReplace(selectedItems, selection, item, element, getRoot());
+				if (!insidePreservingSelection) {
+					selection = adjustSelectionForReplace(selectedItems, selection, item, element, getRoot());
+				}
 				// disassociate any different item that represents the
 				// same element under the same parent (the tree)
 				for (Widget widget : itemsToDisassociate) {
@@ -462,7 +467,10 @@ public class TreeViewer extends AbstractTreeViewer {
 				TreeItem parentItem = (TreeItem) widget;
 				if (index < parentItem.getItemCount()) {
 					TreeItem item = parentItem.getItem(index);
-					selection = adjustSelectionForReplace(selectedItems, selection, item, element, parentItem.getData());
+					if (!insidePreservingSelection) {
+						selection = adjustSelectionForReplace(selectedItems, selection, item, element,
+								parentItem.getData());
+					}
 					// disassociate any different item that represents the
 					// same element under the same parent (the tree)
 					for (Widget widgetToDisassociate : itemsToDisassociate) {
@@ -542,6 +550,9 @@ public class TreeViewer extends AbstractTreeViewer {
 			}
 			virtualMaterializeItem(treeItem);
 			return treeItem.getItemCount() > 0;
+		}
+		if (element instanceof ExpandableNode) {
+			return false;
 		}
 		return super.isExpandable(element);
 	}
@@ -805,13 +816,20 @@ public class TreeViewer extends AbstractTreeViewer {
 	public void remove(final Object parentOrTreePath, final int index) {
 		if (checkBusy())
 			return;
-		final List<TreePath> oldSelection = new LinkedList<>(
+		// in case preservingSelection() is nested avoid getSelection():
+		final List<TreePath> oldSelection = insidePreservingSelection ? null : new LinkedList<>(
 				Arrays.asList(((TreeSelection) getSelection()).getPaths()));
 		preservingSelection(() -> {
 			TreePath removedPath = null;
 			if (internalIsInputOrEmptyPath(parentOrTreePath)) {
 				Tree tree = (Tree) getControl();
 				if (index < tree.getItemCount()) {
+
+					if (getItemsLimit() > 0 && hasLimitedChildrenItems(tree)) {
+						internalRefreshStruct(tree, getInput(), false);
+						return;
+					}
+
 					TreeItem item1 = tree.getItem(index);
 					if (item1.getData() != null) {
 						removedPath = getTreePathFromItem(item1);
@@ -825,6 +843,12 @@ public class TreeViewer extends AbstractTreeViewer {
 					TreeItem parentItem = (TreeItem) parentWidget;
 					if (parentItem.isDisposed())
 						continue;
+
+					if (getItemsLimit() > 0 && hasLimitedChildrenItems(parentWidget)) {
+						internalRefreshStruct(parentWidget, parentWidget.getData(), false);
+						continue;
+					}
+
 					if (index < parentItem.getItemCount()) {
 						TreeItem item2 = parentItem.getItem(index);
 
@@ -845,7 +869,7 @@ public class TreeViewer extends AbstractTreeViewer {
 					}
 				}
 			}
-			if (removedPath != null) {
+			if (removedPath != null && oldSelection != null) {
 				boolean removed = false;
 				for (Iterator<TreePath> it = oldSelection.iterator(); it.hasNext();) {
 					TreePath path = it.next();
@@ -1108,4 +1132,75 @@ public class TreeViewer extends AbstractTreeViewer {
 		}
 	}
 
+	@Override
+	void handleExpandableNodeClicked(Widget w) {
+		if (!(w instanceof Item item)) {
+			return;
+		}
+
+		Object data = item.getData();
+		if (data == null) {
+			return;
+		}
+
+		Object[] children = getSortedChildren(data);
+		if (children.length == 0) {
+			return;
+		}
+
+		boolean oldBusy = isBusy();
+		Tree tree = getTree();
+		try {
+			setBusy(true);
+			tree.setRedraw(false);
+
+			Widget parent = getParentItem(item);
+			if (parent == null) {
+				parent = getControl();
+			}
+
+			// destroy widget
+			disassociate(item);
+			item.dispose();
+
+			// create children on parent
+			for (Object element : children) {
+				createTreeItem(parent, element, -1);
+			}
+
+			// If we've expanded but still have not reached the limit
+			// select new expandable node, so user can click through
+			// to the end
+			Object lastElement = getLastElement(parent);
+			if (lastElement instanceof ExpandableNode node) {
+				setSelection(new StructuredSelection(node), true);
+			} else {
+				// reset the selection. client's selection listener should not be triggered.
+				// there was only one selection on Expandable Node.
+				Item[] curSel = tree.getSelection();
+				if (curSel.length == 1) {
+					tree.deselect((TreeItem) curSel[0]);
+				}
+			}
+		} finally {
+			tree.setRedraw(true);
+			setBusy(oldBusy);
+		}
+	}
+
+	/**
+	 * Returns the data of the last item on the viewer.
+	 *
+	 * @param parent
+	 *
+	 * @return may return null
+	 */
+	Object getLastElement(Widget parent) {
+		Item[] items = getChildren(parent);
+		int length = items.length;
+		if (length == 0) {
+			return null;
+		}
+		return items[length - 1].getData();
+	}
 }

@@ -16,8 +16,8 @@ package org.eclipse.core.tests.internal.databinding.observable;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import org.eclipse.core.databinding.observable.Diffs;
 import org.eclipse.core.databinding.observable.IObservable;
@@ -31,12 +31,11 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.databinding.conformance.MutableObservableValueContractTest;
 import org.eclipse.jface.databinding.conformance.delegate.AbstractObservableValueContractDelegate;
 import org.eclipse.jface.databinding.conformance.util.CurrentRealm;
+import org.eclipse.jface.databinding.conformance.util.TestCollection;
 import org.eclipse.jface.databinding.conformance.util.ValueChangeEventTracker;
 import org.eclipse.jface.tests.databinding.AbstractDefaultRealmTestCase;
 import org.junit.Before;
 import org.junit.Test;
-
-import junit.framework.TestSuite;
 
 /**
  * @since 3.2
@@ -69,11 +68,8 @@ public class ValidatedObservableValueTest extends AbstractDefaultRealmTestCase {
 		CurrentRealm realm2 = new CurrentRealm(true);
 		target = new ObservableValueStub(realm1);
 		validationStatus = new WritableValue(realm2);
-		try {
-			new ValidatedObservableValue(target, validationStatus);
-			fail("Expected exception--target and validation status should have the same realm");
-		} catch (RuntimeException expected) {
-		}
+		assertThrows("Expected exception--target and validation status should have the same realm",
+				RuntimeException.class, () -> new ValidatedObservableValue(target, validationStatus));
 	}
 
 	@Test
@@ -286,8 +282,8 @@ public class ValidatedObservableValueTest extends AbstractDefaultRealmTestCase {
 		}
 	}
 
-	public static void addConformanceTest(TestSuite suite) {
-		suite.addTest(MutableObservableValueContractTest.suite(new Delegate()));
+	public static void addConformanceTest(TestCollection suite) {
+		suite.addTest(MutableObservableValueContractTest.class, new Delegate());
 	}
 
 	static class Delegate extends AbstractObservableValueContractDelegate {

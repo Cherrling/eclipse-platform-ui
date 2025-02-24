@@ -14,16 +14,16 @@
  *******************************************************************************/
 package org.eclipse.e4.ui.tests.css.swt;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import java.util.Hashtable;
+
 import org.eclipse.e4.ui.css.core.engine.CSSEngine;
-import org.eclipse.e4.ui.internal.css.swt.CSSActivator;
 import org.eclipse.e4.ui.internal.css.swt.definition.IColorAndFontProvider;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
@@ -32,13 +32,14 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.internal.themes.ColorDefinition;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.osgi.framework.FrameworkUtil;
 
 public class ColorDefinitionTest extends CSSSWTTestCase {
 
 
 	@Test
-	public void testColorDefinition() {
+	void testColorDefinition() {
 		//given
 		CSSEngine engine = createEngine("ColorDefinition#ACTIVE_HYPERLINK_COLOR{color: green}", display);
 		ColorDefinition definition = colorDefinition("ACTIVE_HYPERLINK_COLOR", "name", "categoryId", "description");
@@ -59,7 +60,7 @@ public class ColorDefinitionTest extends CSSSWTTestCase {
 	}
 
 	@Test
-	public void testColorDefinitionWhenNameCategoryIdAndDescriptionOverridden() {
+	void testColorDefinitionWhenNameCategoryIdAndDescriptionOverridden() {
 		// given
 		CSSEngine engine = createEngine("ColorDefinition#ACTIVE_HYPERLINK_COLOR{color: green;" +
 				"label:'nameOverridden'; category:'#categoryIdOverridden'; description: 'descriptionOverridden'}", display);
@@ -81,7 +82,7 @@ public class ColorDefinitionTest extends CSSSWTTestCase {
 	}
 
 	@Test
-	public void testColorDefinitionWhenDefinitionStylesheetNotFound() {
+	void testColorDefinitionWhenDefinitionStylesheetNotFound() {
 		//given
 		CSSEngine engine = createEngine("ColorDefinition#ACTIVE_HYPERLINK_COLOR{color: green}", display);
 		ColorDefinition definition = colorDefinition("color definition uniqueId without matching stylesheet",
@@ -100,7 +101,7 @@ public class ColorDefinitionTest extends CSSSWTTestCase {
 	}
 
 	@Test
-	public void testWidgetWithColorDefinitionAsBackgroundColor() {
+	void testWidgetWithColorDefinitionAsBackgroundColor() {
 		//given
 		registerColorProviderWith("ACTIVE_HYPERLINK_COLOR", new RGB(255, 0, 0));
 
@@ -121,7 +122,7 @@ public class ColorDefinitionTest extends CSSSWTTestCase {
 	}
 
 	@Test
-	public void testUnset() {
+	void testUnset() {
 		CSSEngine engine = createEngine("Button {background-color: unset;}", display);
 
 		Shell shell = new Shell(display, SWT.SHELL_TRIM);
@@ -144,7 +145,7 @@ public class ColorDefinitionTest extends CSSSWTTestCase {
 	}
 
 	@Test
-	public void testSetColorDefinitionWithSystemColor() {
+	void testSetColorDefinitionWithSystemColor() {
 		// given
 		CSSEngine engine = createEngine("ColorDefinition#ACTIVE_HYPERLINK_COLOR{color: '#COLOR-LIST-SELECTION'}",
 				display);
@@ -169,17 +170,12 @@ public class ColorDefinitionTest extends CSSSWTTestCase {
 	}
 
 	private void registerColorProviderWith(final String symbolicName, final RGB rgb) {
-		try {
-			new CSSActivator() {
-				@Override
-				public IColorAndFontProvider getColorAndFontProvider() {
-					IColorAndFontProvider provider = mock(IColorAndFontProvider.class);
-					doReturn(rgb).when(provider).getColor(symbolicName);
-					return provider;
-				}
-			}.start(null);
-		} catch (Exception e) {
-			fail("Register color provider should not fail");
-		}
+		IColorAndFontProvider provider = mock(IColorAndFontProvider.class);
+		doReturn(rgb).when(provider).getColor(symbolicName);
+		Hashtable<String, Object> properties = new Hashtable<>();
+		properties.put("service.ranking", "1000");
+
+		FrameworkUtil.getBundle(getClass()).getBundleContext().registerService(IColorAndFontProvider.class, provider,
+				properties);
 	}
 }

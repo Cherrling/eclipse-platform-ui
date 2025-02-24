@@ -35,7 +35,6 @@ import org.eclipse.core.runtime.dynamichelpers.IExtensionTracker;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.resource.LocalResourceManager;
 import org.eclipse.jface.resource.ResourceManager;
-import org.eclipse.jface.util.SafeRunnable;
 import org.eclipse.jface.viewers.DecorationContext;
 import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.IColorDecorator;
@@ -95,13 +94,13 @@ public class DecoratorManager implements ILabelProviderListener, IDecoratorManag
 
 	private static final FullDecoratorDefinition[] EMPTY_FULL_DEF = new FullDecoratorDefinition[0];
 
-	private final String PREFERENCE_SEPARATOR = ","; //$NON-NLS-1$
+	private static final String PREFERENCE_SEPARATOR = ","; //$NON-NLS-1$
 
-	private final String VALUE_SEPARATOR = ":"; //$NON-NLS-1$
+	private static final String VALUE_SEPARATOR = ":"; //$NON-NLS-1$
 
-	private final String P_TRUE = "true"; //$NON-NLS-1$
+	private static final String P_TRUE = "true"; //$NON-NLS-1$
 
-	private final String P_FALSE = "false"; //$NON-NLS-1$
+	private static final String P_FALSE = "false"; //$NON-NLS-1$
 
 	private LocalResourceManager resourceManager;
 
@@ -216,11 +215,19 @@ public class DecoratorManager implements ILabelProviderListener, IDecoratorManag
 	 */
 	public DecoratorManager() {
 
-		scheduler = new DecorationScheduler(this);
+		scheduler = new DecorationScheduler(this); // leaks "this" before this is constructed
 		IExtensionTracker tracker = PlatformUI.getWorkbench().getExtensionTracker();
 		tracker.registerHandler(this, ExtensionTracker.createExtensionPointFilter(getExtensionPointFilter()));
 
 		resourceManager = null;
+	}
+
+	/*
+	 * should not be called before constructor finished. Would leak reference to
+	 * incomplete constructed DecoratorManager.this
+	 */
+	public void schedule() {
+		scheduler.schedule();
 	}
 
 	/**
@@ -341,13 +348,7 @@ public class DecoratorManager implements ILabelProviderListener, IDecoratorManag
 	 * @param event    the event with the update details
 	 */
 	void fireListener(final LabelProviderChangedEvent event, final ILabelProviderListener listener) {
-		SafeRunner.run(new SafeRunnable() {
-			@Override
-			public void run() {
-				listener.labelProviderChanged(event);
-			}
-		});
-
+		SafeRunner.run(() -> listener.labelProviderChanged(event));
 	}
 
 	/**
@@ -357,12 +358,7 @@ public class DecoratorManager implements ILabelProviderListener, IDecoratorManag
 	 */
 	void fireListeners(final LabelProviderChangedEvent event) {
 		for (final ILabelProviderListener l : listeners) {
-			SafeRunner.run(new SafeRunnable() {
-				@Override
-				public void run() {
-					l.labelProviderChanged(event);
-				}
-			});
+			SafeRunner.run(() -> l.labelProviderChanged(event));
 		}
 	}
 
@@ -758,6 +754,7 @@ public class DecoratorManager implements ILabelProviderListener, IDecoratorManag
 	 * dispose() will be called on them.
 	 */
 	public void shutdown() {
+		scheduler.shutdown();
 		// Disable all of the enabled decorators
 		// so as to force a dispose of thier decorators
 		FullDecoratorDefinition[] full = getFullDefinitions();
@@ -769,7 +766,6 @@ public class DecoratorManager implements ILabelProviderListener, IDecoratorManag
 		if (lightweightManager != null) {
 			getLightweightManager().shutdown();
 		}
-		scheduler.shutdown();
 		dispose();
 	}
 

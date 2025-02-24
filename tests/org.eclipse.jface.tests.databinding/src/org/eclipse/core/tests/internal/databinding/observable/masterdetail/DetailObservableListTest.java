@@ -20,11 +20,11 @@ package org.eclipse.core.tests.internal.databinding.observable.masterdetail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.core.databinding.observable.IObservable;
 import org.eclipse.core.databinding.observable.IObservableCollection;
@@ -38,12 +38,12 @@ import org.eclipse.core.databinding.observable.value.WritableValue;
 import org.eclipse.core.internal.databinding.observable.masterdetail.DetailObservableList;
 import org.eclipse.core.runtime.AssertionFailedException;
 import org.eclipse.jface.databinding.conformance.MutableObservableListContractTest;
+import org.eclipse.jface.databinding.conformance.ObservableListContractTest;
 import org.eclipse.jface.databinding.conformance.delegate.AbstractObservableCollectionContractDelegate;
 import org.eclipse.jface.databinding.conformance.util.DisposeEventTracker;
+import org.eclipse.jface.databinding.conformance.util.TestCollection;
 import org.eclipse.jface.tests.databinding.AbstractDefaultRealmTestCase;
 import org.junit.Test;
-
-import junit.framework.TestSuite;
 
 /**
  * @since 3.2
@@ -87,13 +87,10 @@ public class DetailObservableListTest extends AbstractDefaultRealmTestCase {
 				factory, observableValue, Object.class);
 		assertEquals(factory.type, detailObservable.getElementType());
 
-		try {
-			factory.type = String.class;
-			observableValue.setValue(new WritableList(Arrays
-					.asList(new Object[] { new Object() }), String.class));
-			fail("if an element type is set this cannot be changed");
-		} catch (AssertionFailedException e) {
-		}
+		factory.type = String.class;
+		assertThrows("if an element type is set this cannot be changed", AssertionFailedException.class,
+				() -> observableValue
+						.setValue(new WritableList(List.of(new Object()), String.class)));
 	}
 
 	/**
@@ -165,8 +162,10 @@ public class DetailObservableListTest extends AbstractDefaultRealmTestCase {
 		}
 	}
 
-	public static void addConformanceTest(TestSuite suite) {
-		suite.addTest(MutableObservableListContractTest.suite(new Delegate()));
+	public static void addConformanceTest(TestCollection suite) {
+		suite.addTest(MutableObservableListContractTest.class, new Delegate());
+		suite.addTest(ObservableListContractTest.class, new Delegate());
+
 	}
 
 	static class Delegate extends AbstractObservableCollectionContractDelegate {

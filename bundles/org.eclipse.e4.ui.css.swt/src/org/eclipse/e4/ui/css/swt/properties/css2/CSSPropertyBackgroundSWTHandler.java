@@ -16,7 +16,6 @@ package org.eclipse.e4.ui.css.swt.properties.css2;
 
 import org.eclipse.e4.ui.css.core.dom.properties.Gradient;
 import org.eclipse.e4.ui.css.core.dom.properties.css2.AbstractCSSPropertyBackgroundHandler;
-import org.eclipse.e4.ui.css.core.dom.properties.css2.ICSSPropertyBackgroundHandler;
 import org.eclipse.e4.ui.css.core.engine.CSSEngine;
 import org.eclipse.e4.ui.css.swt.dom.CompositeElement;
 import org.eclipse.e4.ui.css.swt.dom.WidgetElement;
@@ -30,12 +29,11 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Widget;
 import org.w3c.dom.css.CSSValue;
 
-public class CSSPropertyBackgroundSWTHandler extends
-AbstractCSSPropertyBackgroundHandler {
-	public static final ICSSPropertyBackgroundHandler INSTANCE = new CSSPropertyBackgroundSWTHandler();
+public class CSSPropertyBackgroundSWTHandler extends AbstractCSSPropertyBackgroundHandler {
 
 	@Override
 	public boolean applyCSSProperty(Object element, String property,
@@ -61,7 +59,8 @@ AbstractCSSPropertyBackgroundHandler {
 	public void applyCSSPropertyBackgroundColor(Object element, CSSValue value,
 			String pseudo, CSSEngine engine) throws Exception {
 		Widget widget = (Widget) ((WidgetElement) element).getNativeWidget();
-		if (value.getCssValueType() == CSSValue.CSS_PRIMITIVE_VALUE) {
+		switch (value.getCssValueType()) {
+		case CSSValue.CSS_PRIMITIVE_VALUE:
 			Color newColor = (Color) engine.convert(value, Color.class, widget
 					.getDisplay());
 			if (widget instanceof CTabItem) {
@@ -72,12 +71,16 @@ AbstractCSSPropertyBackgroundHandler {
 				} else {
 					CSSSWTColorHelper.setBackground(folder, newColor);
 				}
+			} else if (widget instanceof ToolItem) {
+				// ToolItem prevents itself from repaints if the same color is set
+				((ToolItem) widget).setBackground(newColor);
 			} else if (widget instanceof Control) {
 				GradientBackgroundListener.remove((Control) widget);
 				CSSSWTColorHelper.setBackground((Control) widget, newColor);
 				CompositeElement.setBackgroundOverriddenByCSSMarker(widget);
 			}
-		} else if (value.getCssValueType() == CSSValue.CSS_VALUE_LIST) {
+			break;
+		case CSSValue.CSS_VALUE_LIST:
 			Gradient grad = (Gradient) engine.convert(value, Gradient.class,
 					widget.getDisplay());
 			if (grad == null) {
@@ -99,6 +102,9 @@ AbstractCSSPropertyBackgroundHandler {
 				GradientBackgroundListener.handle((Control) widget, grad);
 				CompositeElement.setBackgroundOverriddenByCSSMarker(widget);
 			}
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -123,12 +129,6 @@ AbstractCSSPropertyBackgroundHandler {
 	}
 
 	@Override
-	public String retrieveCSSPropertyBackgroundAttachment(Object widget,
-			String pseudo, CSSEngine engine) throws Exception {
-		return null;
-	}
-
-	@Override
 	public String retrieveCSSPropertyBackgroundColor(Object element,
 			String pseudo, CSSEngine engine) throws Exception {
 		Widget widget = (Widget) element;
@@ -140,28 +140,17 @@ AbstractCSSPropertyBackgroundHandler {
 			} else {
 				color = ((CTabItem) widget).getParent().getBackground();
 			}
-		} else if (widget instanceof Control) {
+
+		}
+		else if (widget instanceof ToolItem) {
+			color = ((ToolItem) widget).getBackground();
+		}
+
+		else if (widget instanceof Control) {
 			color = ((Control) widget).getBackground();
 		}
 		return engine.convert(color, Color.class, null);
 	}
 
-	@Override
-	public String retrieveCSSPropertyBackgroundImage(Object widget,
-			String pseudo, CSSEngine engine) throws Exception {
-		// TODO : manage path of Image.
-		return "none";
-	}
 
-	@Override
-	public String retrieveCSSPropertyBackgroundPosition(Object widget,
-			String pseudo, CSSEngine engine) throws Exception {
-		return null;
-	}
-
-	@Override
-	public String retrieveCSSPropertyBackgroundRepeat(Object widget,
-			String pseudo, CSSEngine engine) throws Exception {
-		return null;
-	}
 }

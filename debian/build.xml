@@ -12,7 +12,7 @@
 
   <!-- Eclipse JFace Data Binding --> 
   <target name="org.eclipse.core.databinding" depends="org.eclipse.core.databinding.observable,org.eclipse.core.databinding.property">
-    <make-bundle name="org.eclipse.core.databinding" depends="org.eclipse.core.databinding.observable,org.eclipse.core.databinding.property">
+    <make-bundle name="org.eclipse.core.databinding" depends="org.eclipse.core.databinding.observable,org.eclipse.core.databinding.property" release="11">
       <pathelement path="/usr/share/java/equinox-common.jar"/>
       <pathelement path="/usr/share/java/icu4j.jar"/>
     </make-bundle>
@@ -74,7 +74,7 @@
 
   <!-- Eclipse CSS Core Support -->
   <target name="org.eclipse.e4.ui.css.core">
-    <make-bundle name="org.eclipse.e4.ui.css.core">
+    <make-bundle name="org.eclipse.e4.ui.css.core" release="11">
       <pathelement path="/usr/share/java/equinox-common.jar"/>
       <pathelement path="/usr/share/java/equinox-registry.jar"/>
       <pathelement path="/usr/share/java/xml-apis-1.4.01.jar"/>
@@ -84,7 +84,7 @@
 
   <!-- Eclipse CSS SWT Support -->
   <target name="org.eclipse.e4.ui.css.swt" depends="org.eclipse.e4.ui.css.core,org.eclipse.jface">
-    <make-bundle name="org.eclipse.e4.ui.css.swt" depends="org.eclipse.e4.ui.css.core,org.eclipse.jface">
+    <make-bundle name="org.eclipse.e4.ui.css.swt" depends="org.eclipse.e4.ui.css.core,org.eclipse.jface" release="11">
       <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
       <pathelement path="/usr/share/java/equinox-common.jar"/>
       <pathelement path="/usr/share/java/equinox-preferences.jar"/>
@@ -144,7 +144,7 @@
 
   <!-- Eclipse Workbench Model -->
   <target name="org.eclipse.e4.ui.model.workbench" depends="org.eclipse.core.commands,org.eclipse.e4.emf.xpath">
-    <make-bundle name="org.eclipse.e4.ui.model.workbench" depends="org.eclipse.core.commands,org.eclipse.e4.emf.xpath">
+    <make-bundle name="org.eclipse.e4.ui.model.workbench" release="11" depends="org.eclipse.core.commands,org.eclipse.e4.emf.xpath">
       <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
       <pathelement path="/usr/share/java/eclipse-e4-core-contexts.jar"/>
       <pathelement path="/usr/share/java/eclipse-e4-core-services.jar"/>
@@ -155,8 +155,8 @@
   </target>
 
   <!-- Eclipse e4 Progress View -->
-  <target name="org.eclipse.e4.ui.progress" depends="org.eclipse.e4.core.commands,org.eclipse.e4.ui.di,org.eclipse.e4.ui.model.workbench,org.eclipse.e4.ui.services,org.eclipse.e4.ui.workbench,org.eclipse.jface">
-    <make-bundle name="org.eclipse.e4.ui.progress" depends="org.eclipse.e4.core.commands,org.eclipse.e4.ui.di,org.eclipse.e4.ui.model.workbench,org.eclipse.e4.ui.services,org.eclipse.e4.ui.workbench,org.eclipse.jface">
+  <target name="org.eclipse.e4.ui.progress" depends="org.eclipse.e4.core.commands,org.eclipse.e4.ui.di,org.eclipse.e4.ui.model.workbench,org.eclipse.e4.ui.services,org.eclipse.e4.ui.workbench,org.eclipse.e4.ui.workbench.swt,org.eclipse.jface">
+    <make-bundle name="org.eclipse.e4.ui.progress" depends="org.eclipse.e4.core.commands,org.eclipse.e4.ui.di,org.eclipse.e4.ui.model.workbench,org.eclipse.e4.ui.services,org.eclipse.e4.ui.workbench,org.eclipse.e4.ui.workbench.swt,org.eclipse.jface">
       <pathelement path="/usr/share/java/atinject-jsr330-api.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-commands.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-jobs.jar"/>
@@ -204,7 +204,7 @@
 
   <!-- Eclipse E4 UI Model -->
   <target name="org.eclipse.e4.ui.workbench" depends="org.eclipse.e4.ui.model.workbench,org.eclipse.e4.core.commands,org.eclipse.core.commands,org.eclipse.e4.ui.di,org.eclipse.e4.ui.services">
-    <make-bundle name="org.eclipse.e4.ui.workbench" release="11" depends="org.eclipse.e4.ui.model.workbench,org.eclipse.e4.core.commands,org.eclipse.core.commands,org.eclipse.e4.ui.di,org.eclipse.e4.ui.services">
+    <make-bundle name="org.eclipse.e4.ui.workbench" release="17" depends="org.eclipse.e4.ui.model.workbench,org.eclipse.e4.core.commands,org.eclipse.core.commands,org.eclipse.e4.ui.di,org.eclipse.e4.ui.services">
       <pathelement path="/usr/share/java/atinject-jsr330-api.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-expressions.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
@@ -253,7 +253,7 @@
 
   <!-- Eclipse Workbench Renderers SWT -->
   <target name="org.eclipse.e4.ui.workbench.renderers.swt" depends="org.eclipse.e4.ui.workbench.swt,org.eclipse.jface,org.eclipse.e4.ui.model.workbench,org.eclipse.e4.ui.workbench,org.eclipse.e4.ui.css.swt,org.eclipse.e4.ui.di,org.eclipse.e4.ui.css.core,org.eclipse.e4.ui.services,org.eclipse.core.commands,org.eclipse.e4.core.commands,org.eclipse.e4.ui.bindings">
-    <make-bundle name="org.eclipse.e4.ui.workbench.renderers.swt" depends="org.eclipse.e4.ui.workbench.swt,org.eclipse.jface,org.eclipse.e4.ui.model.workbench,org.eclipse.e4.ui.workbench,org.eclipse.e4.ui.css.swt,org.eclipse.e4.ui.di,org.eclipse.e4.ui.css.core,org.eclipse.e4.ui.services,org.eclipse.core.commands,org.eclipse.e4.core.commands,org.eclipse.e4.ui.bindings">
+    <make-bundle name="org.eclipse.e4.ui.workbench.renderers.swt" release="17" depends="org.eclipse.e4.ui.workbench.swt,org.eclipse.jface,org.eclipse.e4.ui.model.workbench,org.eclipse.e4.ui.workbench,org.eclipse.e4.ui.css.swt,org.eclipse.e4.ui.di,org.eclipse.e4.ui.css.core,org.eclipse.e4.ui.services,org.eclipse.core.commands,org.eclipse.e4.core.commands,org.eclipse.e4.ui.bindings">
       <pathelement path="/usr/share/java/atinject-jsr330-api.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-expressions.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
@@ -267,6 +267,7 @@
       <pathelement path="/usr/share/java/eclipse-osgi-services.jar"/>
       <pathelement path="/usr/share/java/equinox-common.jar"/>
       <pathelement path="/usr/share/java/equinox-preferences.jar"/>
+      <pathelement path="/usr/share/java/geronimo-annotation-1.3-spec.jar"/>
       <pathelement path="/usr/share/java/swt4.jar"/>
       <pathelement path="/usr/share/java/xml-apis-1.4.01.jar"/>
     </make-bundle>
@@ -301,7 +302,7 @@
 
   <!-- Eclipse JFace -->
   <target name="org.eclipse.jface" depends="org.eclipse.core.commands">
-    <make-bundle name="org.eclipse.jface" release="11" depends="org.eclipse.core.commands">
+    <make-bundle name="org.eclipse.jface" release="17" depends="org.eclipse.core.commands">
       <pathelement path="/usr/share/java/equinox-bidi.jar"/>
       <pathelement path="/usr/share/java/equinox-common.jar"/>
       <pathelement path="/usr/share/java/swt4.jar"/>
@@ -363,8 +364,8 @@
   </target>
 
   <!-- Eclipse IDE UI -->
-  <target name="org.eclipse.ui.ide" depends="org.eclipse.e4.core.commands,org.eclipse.e4.ui.ide,org.eclipse.e4.ui.workbench,org.eclipse.jface,org.eclipse.ui.forms,org.eclipse.ui.navigator,org.eclipse.ui.views,org.eclipse.ui.workbench">
-    <make-bundle name="org.eclipse.ui.ide" release="11" depends="org.eclipse.e4.core.commands,org.eclipse.e4.ui.ide,org.eclipse.e4.ui.workbench,org.eclipse.jface,org.eclipse.ui.forms,org.eclipse.ui.navigator,org.eclipse.ui.views,org.eclipse.ui.workbench">
+  <target name="org.eclipse.ui.ide" depends="org.eclipse.e4.core.commands,org.eclipse.e4.ui.ide,org.eclipse.e4.ui.workbench,org.eclipse.jface,org.eclipse.ui,org.eclipse.ui.forms,org.eclipse.ui.navigator,org.eclipse.ui.views,org.eclipse.ui.workbench">
+    <make-bundle name="org.eclipse.ui.ide" release="17" depends="org.eclipse.e4.core.commands,org.eclipse.e4.ui.ide,org.eclipse.e4.ui.workbench,org.eclipse.jface,org.eclipse.ui,org.eclipse.ui.forms,org.eclipse.ui.navigator,org.eclipse.ui.views,org.eclipse.ui.workbench">
       <pathelement path="/usr/share/java/atinject-jsr330-api.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-commands.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-contenttype.jar"/>
@@ -396,7 +397,7 @@
 
   <!-- Eclipse IDE UI Application -->
   <target name="org.eclipse.ui.ide.application" depends="org.eclipse.core.commands,org.eclipse.e4.ui.di,org.eclipse.e4.ui.model.workbench,org.eclipse.e4.ui.workbench,org.eclipse.e4.ui.workbench3,org.eclipse.jface,org.eclipse.ui.ide,org.eclipse.ui.workbench,org.eclipse.urischeme">
-    <make-bundle name="org.eclipse.ui.ide.application" depends="org.eclipse.core.commands,org.eclipse.e4.ui.di,org.eclipse.e4.ui.model.workbench,org.eclipse.e4.ui.workbench,org.eclipse.e4.ui.workbench3,org.eclipse.jface,org.eclipse.ui.ide,org.eclipse.ui.workbench,org.eclipse.urischeme">
+    <make-bundle name="org.eclipse.ui.ide.application" depends="org.eclipse.core.commands,org.eclipse.e4.ui.di,org.eclipse.e4.ui.model.workbench,org.eclipse.e4.ui.workbench,org.eclipse.e4.ui.workbench3,org.eclipse.jface,org.eclipse.ui.ide,org.eclipse.ui.workbench,org.eclipse.urischeme" release="11">
       <pathelement path="/usr/share/java/atinject-jsr330-api.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-filesystem.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-jobs.jar"/>
@@ -431,7 +432,7 @@
 
   <!-- Eclipse Common Navigator View -->
   <target name="org.eclipse.ui.navigator" depends="org.eclipse.core.commands,org.eclipse.jface,org.eclipse.ui.workbench">
-    <make-bundle name="org.eclipse.ui.navigator" depends="org.eclipse.core.commands,org.eclipse.jface,org.eclipse.ui.workbench">
+    <make-bundle name="org.eclipse.ui.navigator" release="17" depends="org.eclipse.core.commands,org.eclipse.jface,org.eclipse.ui.workbench">
       <pathelement path="/usr/share/java/eclipse-core-expressions.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-jobs.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
@@ -498,7 +499,7 @@
 
   <!-- Eclipse URI Scheme Handling -->
   <target name="org.eclipse.urischeme" depends="">
-    <make-bundle name="org.eclipse.urischeme" depends="">
+    <make-bundle name="org.eclipse.urischeme" depends="" release="17">
       <pathelement path="/usr/share/java/eclipse-core-jobs.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
       <pathelement path="/usr/share/java/equinox-common.jar"/>
@@ -517,7 +518,7 @@
 
   <!-- Eclipse Navigator Workbench Components -->
   <target name="org.eclipse.ui.navigator.resources" depends="org.eclipse.jface,org.eclipse.ui.navigator,org.eclipse.ui.workbench,org.eclipse.ui.ide,org.eclipse.core.commands,org.eclipse.ui.views,org.eclipse.ui.views.properties.tabbed">
-    <make-bundle name="org.eclipse.ui.navigator.resources" depends="org.eclipse.jface,org.eclipse.ui.navigator,org.eclipse.ui.workbench,org.eclipse.ui.ide,org.eclipse.core.commands,org.eclipse.ui.views,org.eclipse.ui.views.properties.tabbed">
+    <make-bundle name="org.eclipse.ui.navigator.resources" release="17" depends="org.eclipse.jface,org.eclipse.ui.navigator,org.eclipse.ui.workbench,org.eclipse.ui.ide,org.eclipse.core.commands,org.eclipse.ui.views,org.eclipse.ui.views.properties.tabbed">
       <pathelement path="/usr/share/java/eclipse-core-expressions.jar"/>
       <pathelement path="/usr/share/java/eclipse-core-resources.jar"/>
       <pathelement path="/usr/share/java/equinox-common.jar"/>
@@ -527,6 +528,124 @@
       <pathelement path="/usr/share/java/eclipse-ltk-core-refactoring.jar"/>
       <pathelement path="/usr/share/java/equinox-registry.jar"/>
       <pathelement path="/usr/share/java/eclipse-ltk-ui-refactoring.jar"/>
+    </make-bundle>
+  </target>
+
+  <!-- Eclipse File Buffers -->
+  <target name="org.eclipse.core.filebuffers" depends="org.eclipse.text">
+    <make-bundle name="org.eclipse.core.filebuffers" depends="org.eclipse.text" release="17">
+      <pathelement path="/usr/share/java/eclipse-core-contenttype.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-filesystem.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-jobs.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-resources.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
+      <pathelement path="/usr/share/java/equinox-common.jar"/>
+      <pathelement path="/usr/share/java/equinox-preferences.jar"/>
+      <pathelement path="/usr/share/java/equinox-registry.jar"/>
+      <pathelement path="/usr/share/java/icu4j.jar"/>
+    </make-bundle>
+  </target>
+
+  <!-- Eclipse JFace Text -->
+  <target name="org.eclipse.jface.text" depends="org.eclipse.text">
+    <make-bundle name="org.eclipse.jface.text" depends="org.eclipse.text" release="17">
+      <pathelement path="/usr/share/java/eclipse-jface.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-commands.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-jobs.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
+      <pathelement path="/usr/share/java/equinox-common.jar"/>
+      <pathelement path="/usr/share/java/equinox-preferences.jar"/>
+      <pathelement path="/usr/share/java/icu4j.jar"/>
+      <pathelement path="/usr/share/java/swt4.jar"/>
+    </make-bundle>
+  </target>
+
+  <!-- Eclipse Search Support-->
+  <target name="org.eclipse.search" depends="org.eclipse.core.filebuffers,org.eclipse.jface,org.eclipse.jface.text,org.eclipse.text,org.eclipse.ui.forms,org.eclipse.ui.ide,org.eclipse.ui.workbench,org.eclipse.ui.workbench.texteditor">
+    <make-bundle name="org.eclipse.search" release="17" depends="org.eclipse.core.filebuffers,org.eclipse.jface,org.eclipse.jface.text,org.eclipse.text,org.eclipse.ui.forms,org.eclipse.ui.ide,org.eclipse.ui.workbench,org.eclipse.ui.workbench.texteditor">
+      <pathelement path="/usr/share/java/eclipse-core-commands.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-contenttype.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-filesystem.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-jobs.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-resources.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
+      <pathelement path="/usr/share/java/eclipse-jface.jar"/>
+      <pathelement path="/usr/share/java/eclipse-ltk-core-refactoring.jar"/>
+      <pathelement path="/usr/share/java/eclipse-ltk-ui-refactoring.jar"/>
+      <pathelement path="/usr/share/java/equinox-common.jar"/>
+      <pathelement path="/usr/share/java/equinox-preferences.jar"/>
+      <pathelement path="/usr/share/java/equinox-registry.jar"/>
+      <pathelement path="/usr/share/java/icu4j.jar"/>
+      <pathelement path="/usr/share/java/swt4.jar"/>
+    </make-bundle>
+  </target>
+
+  <!-- Eclipse Text -->
+  <target name="org.eclipse.text">
+    <make-bundle name="org.eclipse.text">
+      <pathelement path="/usr/share/java/equinox-common.jar"/>
+      <pathelement path="/usr/share/java/equinox-preferences.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-commands.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
+      <pathelement path="/usr/share/java/icu4j.jar"/>
+    </make-bundle>
+  </target>
+
+  <!-- Eclipse Default Text Editor -->
+  <target name="org.eclipse.ui.editors" depends="org.eclipse.jface.text,org.eclipse.text,org.eclipse.ui.ide,org.eclipse.ui.workbench,org.eclipse.ui.workbench.texteditor">
+    <make-bundle name="org.eclipse.ui.editors" release="17" depends="org.eclipse.jface.text,org.eclipse.text,org.eclipse.ui.ide,org.eclipse.ui.workbench,org.eclipse.ui.workbench.texteditor">
+      <pathelement path="/usr/share/java/eclipse-core-commands.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-contenttype.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-expressions.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-filebuffers.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-filesystem.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-jobs.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-resources.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
+      <pathelement path="/usr/share/java/eclipse-jdt-annotation.jar"/>
+      <pathelement path="/usr/share/java/eclipse-jface.jar"/>
+      <pathelement path="/usr/share/java/equinox-common.jar"/>
+      <pathelement path="/usr/share/java/equinox-preferences.jar"/>
+      <pathelement path="/usr/share/java/equinox-registry.jar"/>
+      <pathelement path="/usr/share/java/icu4j.jar"/>
+      <pathelement path="/usr/share/java/swt4.jar"/>
+    </make-bundle>
+  </target>
+
+  <!-- Eclipse Generic and Extensible Text Editor -->
+  <target name="org.eclipse.ui.genericeditor" depends="org.eclipse.jface.text,org.eclipse.text,org.eclipse.ui.editors,org.eclipse.ui.ide,org.eclipse.ui.workbench,org.eclipse.ui.workbench.texteditor">
+    <make-bundle name="org.eclipse.ui.genericeditor" release="17" depends="org.eclipse.jface.text,org.eclipse.text,org.eclipse.ui.editors,org.eclipse.ui.ide,org.eclipse.ui.workbench,org.eclipse.ui.workbench.texteditor">
+      <pathelement path="/usr/share/java/eclipse-compare.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-commands.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-contenttype.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-expressions.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-filebuffers.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-jobs.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-resources.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
+      <pathelement path="/usr/share/java/eclipse-jface.jar"/>
+      <pathelement path="/usr/share/java/equinox-common.jar"/>
+      <pathelement path="/usr/share/java/equinox-preferences.jar"/>
+      <pathelement path="/usr/share/java/equinox-registry.jar"/>
+      <pathelement path="/usr/share/java/swt4.jar"/>
+    </make-bundle>
+  </target>
+
+  <!-- Eclipse Text Editor Framework -->
+  <target name="org.eclipse.ui.workbench.texteditor" depends="org.eclipse.jface.text,org.eclipse.text,org.eclipse.ui.workbench">
+    <make-bundle name="org.eclipse.ui.workbench.texteditor" release="11" depends="org.eclipse.jface.text,org.eclipse.text,org.eclipse.ui.workbench">
+      <pathelement path="/usr/share/java/eclipse-compare-core.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-commands.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-contenttype.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-expressions.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-jobs.jar"/>
+      <pathelement path="/usr/share/java/eclipse-core-runtime.jar"/>
+      <pathelement path="/usr/share/java/eclipse-jface.jar"/>
+      <pathelement path="/usr/share/java/equinox-common.jar"/>
+      <pathelement path="/usr/share/java/equinox-preferences.jar"/>
+      <pathelement path="/usr/share/java/equinox-registry.jar"/>
+      <pathelement path="/usr/share/java/icu4j.jar"/>
+      <pathelement path="/usr/share/java/swt4.jar"/>
     </make-bundle>
   </target>
 
